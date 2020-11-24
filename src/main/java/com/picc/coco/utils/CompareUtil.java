@@ -18,7 +18,7 @@ public class CompareUtil {
      */
     private static void valueCompare(Object resp, Object db, StringBuffer errorMessage, String fieldName) {
         System.out.println(fieldName + "开始进行校验");
-        // null的处理
+        //null的处理，如果是null返回空字符串，如果不是null转换为String类型
         String respStr = isNull(resp).trim();
         String dbStr = isNull(db).trim();
         //时间类型的处理
@@ -34,7 +34,6 @@ public class CompareUtil {
                 errorMessage.append("数据库===" + dbStr + "\n");
             }
         } else {
-            // && !dbStr.equals(respStr + ".0")
             if (!respStr.equals(dbStr)) {
                 errorMessage.append(fieldName + "的值数据库和接口返回的不一致 \n");
                 errorMessage.append("接口===" + respStr + "\n");
@@ -48,12 +47,11 @@ public class CompareUtil {
      *
      * @param fieldName 节点名
      * @param JS        JSON数据
-     * @param resultJA  获取的节点数据
+     * @param resultJA  返回或者请求报文的节点数据（作为listCompare的方法参数）
      */
-    public static void getJAByFieldByID(String fieldName, JSONObject JS, JSONArray resultJA) {
+    public static void getJAByField(String fieldName, JSONObject JS, JSONArray resultJA) {
         Set<Entry<String, Object>> entrySet = JS.entrySet();
         boolean flag = false;
-        JSONObject temJS = null;
         for (Entry<String, Object> entry : entrySet) {
             if ((entry.getKey()).equals(fieldName)) {
                 flag = true;
@@ -77,7 +75,7 @@ public class CompareUtil {
                     try {
                         JSONArray temJA = (JSONArray) entry.getValue();
                         for (int i = 0; i < temJA.size(); i++) {
-                            getJAByFieldByID(fieldName, temJA.getJSONObject(i), resultJA);
+                            getJAByField(fieldName, temJA.getJSONObject(i), resultJA);
                         }
                     } catch (Exception e) {
                         System.out.println("JSONArray  转化失败");
@@ -85,8 +83,7 @@ public class CompareUtil {
                 } else if (entry.getValue() != null
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                     try {
-                        temJS = (JSONObject) entry.getValue();
-                        getJAByFieldByID(fieldName, (JSONObject) entry.getValue(), resultJA);
+                        getJAByField(fieldName, (JSONObject) entry.getValue(), resultJA);
                     } catch (Exception e) {
                         System.out.println("转化失败");
                     }
@@ -106,25 +103,24 @@ public class CompareUtil {
      * @param fieldName    节点名
      * @param ignoreList   存放不需要校验的字段
      */
-    public static void listCompareByID(JSONArray resps, JSONArray db, StringBuffer errorMessage, String fieldName,
+    public static void listCompare(JSONArray resps, JSONArray db, StringBuffer errorMessage, String fieldName,
                                        ArrayList<String> ignoreList) {
-        if(ignoreList ==null) {
+        if (ignoreList == null) {
             ignoreList = new ArrayList<String>();
         }
         /**
-         * 这里更加确定ID
-         * 根据ID进行数据校验
-         * */
+         * 这里更加确定ID 根据ID进行数据校验
+         */
         ArrayList<String> ids = new ArrayList<String>();
         JSONObject temRespIdJs = null;
-        if(resps != null && resps.size() > 0) {
+        if (resps != null && resps.size() > 0) {
             try {
                 temRespIdJs = resps.getJSONObject(0).getJSONObject("id");
             } catch (Exception e) {
                 // TODO: handle exception
             }
 
-            if(temRespIdJs != null) {
+            if (temRespIdJs != null) {
                 Set<Entry<String, Object>> entrySet_id = temRespIdJs.entrySet();
                 for (Entry<String, Object> ide : entrySet_id) {
                     ids.add(ide.getKey());
@@ -134,33 +130,27 @@ public class CompareUtil {
 
         /**
          * ID 里的字段放入到IgnoreList
-         * */
+         */
         ignoreList.addAll(ids);
 
-        if(resps.size() == db.size()) {
-            if(ids == null || ids.size() == 0) {
+        if (resps.size() == db.size()) {
+            if (ids == null || ids.size() == 0) {
                 for (int i = 0; i < resps.size(); i++) {
                     JSONObjectCompare(resps.getJSONObject(i), db.getJSONObject(i), errorMessage, ignoreList);
                 }
-            }else {
+            } else {
                 for (int i = 0; i < resps.size(); i++) {
                     JSONObject resp_tem = resps.getJSONObject(i);
                     for (int j = 0; j < db.size(); j++) {
                         JSONObject db_tem = db.getJSONObject(j);
-                        if(isIdentical(resp_tem,db_tem,ids)) {
+                        if (isIdentical(resp_tem, db_tem, ids)) {
                             JSONObjectCompare(resp_tem, db_tem, errorMessage, ignoreList);
                         }
                     }
                 }
             }
-        }else {
-            errorMessage.append(fieldName + "接口返回的数据和数据库的数据数量不同");
-        }
-
-        if (resps.size() == db.size()) {
-
         } else {
-
+            errorMessage.append(fieldName + "接口返回的数据和数据库的数据数量不同");
         }
     }
 
@@ -183,7 +173,9 @@ public class CompareUtil {
     }
 
     /**
-     * null处理
+     * NUll值的处理
+     * @param value1
+     * @return
      */
     private static String isNull(Object value1) {
         if (value1 == null) {
@@ -222,7 +214,6 @@ public class CompareUtil {
             if (ignoreList.contains(entry.getKey())) {
                 continue;
             }
-            System.out.println("key============" + entry.getKey());
             if (entry.getValue() != null
                     && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONArray")) {
                 continue;
@@ -252,7 +243,7 @@ public class CompareUtil {
     }
 
     /**
-     * 判断一个字段是不是时间类型
+     * 判断一个字段是不是时间类型,如果时分秒没有值，直接去除时分秒，如果时分秒有值，保留时分秒。
      * @param  value
      * @return String
      * */
@@ -285,7 +276,7 @@ public class CompareUtil {
     }
 
     /**
-     * 去掉下划线
+     * 去掉数据库字段的下划线（核保微服务）
      * @param JA
      * @return
      */
@@ -311,811 +302,16 @@ public class CompareUtil {
     }
 
     public static void main(String[] args) {
-        String value = "{\n" +
-                "    \"status\": 0,\n" +
-                "    \"statusText\": \"Success\",\n" +
-                "    \"data\": {\n" +
-                "        \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "        \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "        \"classCode\": \"02\",\n" +
-                "        \"riskCode\": \"JBU\",\n" +
-                "        \"projectCode\": \"\",\n" +
-                "        \"contractNo\": \"\",\n" +
-                "        \"policySort\": \"1\",\n" +
-                "        \"businessNature\": \"0\",\n" +
-                "        \"language\": \"C\",\n" +
-                "        \"policyType\": \"01\",\n" +
-                "        \"agriFlag\": \"0\",\n" +
-                "        \"operateDate\": \"2020-01-01 13:11:17\",\n" +
-                "        \"startDate\": \"2020-01-08 00:00:00\",\n" +
-                "        \"endDate\": \"2021-01-07 00:00:00\",\n" +
-                "        \"startHour\": null,\n" +
-                "        \"endHour\": null,\n" +
-                "        \"disRate\": null,\n" +
-                "        \"sumValue\": 0.00,\n" +
-                "        \"sumAmount\": 200.00,\n" +
-                "        \"sumDiscount\": null,\n" +
-                "        \"sumPremiumB4Discount\": null,\n" +
-                "        \"couponAmount\": null,\n" +
-                "        \"couponPremium\": null,\n" +
-                "        \"minPremium\": null,\n" +
-                "        \"sumPremium\": 20.00,\n" +
-                "        \"sumSubPrem\": 0.00,\n" +
-                "        \"sumQuantity\": 1,\n" +
-                "        \"policyCount\": 1,\n" +
-                "        \"judicalScope\": \"01\",\n" +
-                "        \"argueSolution\": \"1\",\n" +
-                "        \"arbitBoardName\": \"\",\n" +
-                "        \"payTimes\": 1,\n" +
-                "        \"makeCom\": \"32048200\",\n" +
-                "        \"operateSite\": null,\n" +
-                "        \"comCode\": \"32048200\",\n" +
-                "        \"handlerCode\": \"16207959\",\n" +
-                "        \"handler1Code\": \"16207986\",\n" +
-                "        \"checkFlag\": \"4\",\n" +
-                "        \"checkUpCode\": null,\n" +
-                "        \"checkOpinion\": null,\n" +
-                "        \"underWriteCode\": \"UnderWrite\",\n" +
-                "        \"underWriteName\": \"自动核保\",\n" +
-                "        \"operatorCode\": \"83298873\",\n" +
-                "        \"inputTime\": \"2020-01-11 17:11:04\",\n" +
-                "        \"underWriteEndDate\": \"2020-01-15\",\n" +
-                "        \"statisticsYM\": \"202001\",\n" +
-                "        \"agentCode\": \"000002000001\",\n" +
-                "        \"coinsFlag\": \"00\",\n" +
-                "        \"reinsFlag\": \"0000000000\",\n" +
-                "        \"allinsFlag\": \"0\",\n" +
-                "        \"underWriteFlag\": \"3\",\n" +
-                "        \"jfeeFlag\": \"0\",\n" +
-                "        \"inputFlag\": \"0\",\n" +
-                "        \"undwrtSubmitDate\": \"2020-01-15\",\n" +
-                "        \"othFlag\": \"000000YY00\",\n" +
-                "        \"remark\": null,\n" +
-                "        \"checkCode\": null,\n" +
-                "        \"flag\": null,\n" +
-                "        \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "        \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "        \"payMode\": \"9\",\n" +
-                "        \"payCode\": null,\n" +
-                "        \"crossFlag\": \"0\",\n" +
-                "        \"batchGroupNo\": null,\n" +
-                "        \"sumTaxFee\": 1.13,\n" +
-                "        \"sumNetPremium\": 18.87,\n" +
-                "        \"prePremium\": null,\n" +
-                "        \"pkey\": \"TJBU202032046000005683\",\n" +
-                "        \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "        \"currency\": \"CNY\",\n" +
-                "        \"dmFlag\": null,\n" +
-                "        \"handler1Code_uni\": \"1232061117\",\n" +
-                "        \"handlerCode_uni\": \"\",\n" +
-                "        \"isAutoePolicy\": null,\n" +
-                "        \"salesCode\": null,\n" +
-                "        \"personOri\": \"4\",\n" +
-                "        \"productCode\": null,\n" +
-                "        \"productName\": null,\n" +
-                "        \"approverCode\": null,\n" +
-                "        \"pureRate\": null,\n" +
-                "        \"discount\": null,\n" +
-                "        \"insuredCount\": null,\n" +
-                "        \"auditNo\": null,\n" +
-                "        \"auditNoToE\": null,\n" +
-                "        \"crossSellType\": null,\n" +
-                "        \"inputSumPremium\": null,\n" +
-                "        \"dutySumNetPremium\": null,\n" +
-                "        \"freeSumNetPremium\": null,\n" +
-                "        \"orderNo\": null,\n" +
-                "        \"orderFlag\": null,\n" +
-                "        \"policyPageVo\": {\n" +
-                "            \"tableMap\": {\n" +
-                "                \"PrpCcoins\": 0,\n" +
-                "                \"PrpCname\": 0,\n" +
-                "                \"PrpCitem\": 0,\n" +
-                "                \"PrpCaddress\": 0,\n" +
-                "                \"PrpCinsured\": 2,\n" +
-                "                \"PrpCration\": 1\n" +
-                "            },\n" +
-                "            \"pageGroupVos\": [\n" +
-                "                {\n" +
-                "                    \"groupNo\": 1,\n" +
-                "                    \"groupMap\": {\n" +
-                "                        \"PrpCitemKind\": 1\n" +
-                "                    }\n" +
-                "                }\n" +
-                "            ],\n" +
-                "            \"pageItemVos\": null\n" +
-                "        },\n" +
-                "        \"prpCinsuredCataLists\": null,\n" +
-                "        \"prpCmainAccs\": [],\n" +
-                "        \"prpCmainExts\": [],\n" +
-                "        \"prpCmainBonds\": [],\n" +
-                "        \"prpCmainCredits\": [],\n" +
-                "        \"prpCextendInfos\": [\n" +
-                "            {\n" +
-                "                \"id\": {\n" +
-                "                    \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                    \"extendType\": \"04\",\n" +
-                "                    \"serialNo\": 1,\n" +
-                "                    \"columnCode\": \"5173用户游戏帐号\"\n" +
-                "                },\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\": \"JBU\",\n" +
-                "                \"columnName\": \"王者荣耀\",\n" +
-                "                \"content\": \"1\",\n" +
-                "                \"displayOrder\": 0,\n" +
-                "                \"flag\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\"\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"prpCmainAirLines\": [],\n" +
-                "        \"prpCcommissions\": [],\n" +
-                "        \"prpCcoeffs\": [],\n" +
-                "        \"prpCmainAgris\": [],\n" +
-                "        \"prpCprojects\": [],\n" +
-                "        \"prpCprofitFactors\": [],\n" +
-                "        \"prpCitemCreditOths\": [],\n" +
-                "        \"prpCclauseplans\": [],\n" +
-                "        \"prpCpayeeAccounts\": [],\n" +
-                "        \"prpCinsuredCreditInvests\": [],\n" +
-                "        \"actualProduct\": null,\n" +
-                "        \"prpCmainExtraVo\": null,\n" +
-                "        \"Employees\": [],\n" +
-                "        \"Props\": [],\n" +
-                "        \"AgentDetails\": [],\n" +
-                "        \"shipDrivers\": [],\n" +
-                "        \"Drivers\": [],\n" +
-                "        \"Addresses\": [],\n" +
-                "        \"InsuredIdvLists\": [],\n" +
-                "        \"Crosses\": [],\n" +
-                "        \"Subs\": [],\n" +
-                "        \"Agents\": [],\n" +
-                "        \"Constructs\": [],\n" +
-                "        \"Itemkinds\": [\n" +
-                "            {\n" +
-                "                \"id\": {\n" +
-                "                    \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                    \"itemKindNo\": 1\n" +
-                "                },\n" +
-                "                \"riskCode\": \"JBU\",\n" +
-                "                \"familyNo\": null,\n" +
-                "                \"familyName\": null,\n" +
-                "                \"projectCode\": null,\n" +
-                "                \"clauseCode\": \"020223\",\n" +
-                "                \"clauseName\": \"网络游戏虚拟财产损失保险条款\",\n" +
-                "                \"kindCode\": \"020164\",\n" +
-                "                \"kindName\": \"网络游戏虚拟财产损失\",\n" +
-                "                \"itemNo\": 1,\n" +
-                "                \"itemCode\": \"002131\",\n" +
-                "                \"itemDetailName\": \"游戏账号\",\n" +
-                "                \"groupNo\": 1,\n" +
-                "                \"modeCode\": \"JBUYY00001\",\n" +
-                "                \"modeName\": \"虚拟财产保险060天至060天\",\n" +
-                "                \"startDate\": \"2020-01-08\",\n" +
-                "                \"startHour\": null,\n" +
-                "                \"endDate\": \"2021-01-07\",\n" +
-                "                \"endHour\": null,\n" +
-                "                \"model\": null,\n" +
-                "                \"buyDate\": null,\n" +
-                "                \"addressNo\": null,\n" +
-                "                \"calculateFlag\": \"1\",\n" +
-                "                \"currency\": \"CNY\",\n" +
-                "                \"unitAmount\": 200.00,\n" +
-                "                \"quantity\": 1,\n" +
-                "                \"unit\": \"1\",\n" +
-                "                \"value\": null,\n" +
-                "                \"amount\": 200.00,\n" +
-                "                \"ratePeriod\": null,\n" +
-                "                \"rate\": 10.00000000000,\n" +
-                "                \"shortRateFlag\": \"3\",\n" +
-                "                \"shortRate\": 100.0000,\n" +
-                "                \"prePremium\": null,\n" +
-                "                \"calPremium\": 20.00,\n" +
-                "                \"basePremium\": null,\n" +
-                "                \"benchMarkPremium\": null,\n" +
-                "                \"discount\": null,\n" +
-                "                \"adjustRate\": null,\n" +
-                "                \"unitPremium\": 20.00,\n" +
-                "                \"premiumB4Discount\": null,\n" +
-                "                \"premium\": 20.00,\n" +
-                "                \"deductibleRate\": null,\n" +
-                "                \"deductible\": null,\n" +
-                "                \"taxFee\": 1.13,\n" +
-                "                \"taxFee_ys\": null,\n" +
-                "                \"taxFee_gb\": 0.00,\n" +
-                "                \"taxFee_lb\": 0.00,\n" +
-                "                \"netPremium\": 18.87,\n" +
-                "                \"allTaxFee\": 1.13,\n" +
-                "                \"allNetPremium\": 18.87,\n" +
-                "                \"taxRate\": 6.00,\n" +
-                "                \"taxFlag\": \"2\",\n" +
-                "                \"flag\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"prpCprofits\": [],\n" +
-                "                \"iscalculateFlag\": null,\n" +
-                "                \"userCount\": null,\n" +
-                "                \"pack\": null,\n" +
-                "                \"firstLevel\": null,\n" +
-                "                \"methodType\": null,\n" +
-                "                \"insuredQuantity\": null,\n" +
-                "                \"clauseFlag\": null,\n" +
-                "                \"prpCitemKindTaxFees\": [],\n" +
-                "                \"ItemKindDetails\": []\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Limits\": [],\n" +
-                "        \"Loans\": [],\n" +
-                "        \"Engages\": [],\n" +
-                "        \"Insureds\": [\n" +
-                "            {\n" +
-                "                \"id\": {\n" +
-                "                    \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                    \"serialNo\": 1\n" +
-                "                },\n" +
-                "                \"serialNo\": null,\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\": \"JBU\",\n" +
-                "                \"language\": \"C\",\n" +
-                "                \"insuredType\": \"1\",\n" +
-                "                \"insuredCode\": \"8888888888888888\",\n" +
-                "                \"insuredName\": \"测试\",\n" +
-                "                \"insuredEName\": null,\n" +
-                "                \"aliasName\": null,\n" +
-                "                \"insuredAddress\": null,\n" +
-                "                \"insuredNature\": null,\n" +
-                "                \"insuredFlag\": \"100000000000000000000000000000\",\n" +
-                "                \"unitType\": null,\n" +
-                "                \"appendPrintName\": null,\n" +
-                "                \"insuredIdentity\": \"99\",\n" +
-                "                \"relateSerialNo\": null,\n" +
-                "                \"identifyType\": \"01\",\n" +
-                "                \"identifyNumber\": \"110101198001010010\",\n" +
-                "                \"unifiedSocialCreditCode\": null,\n" +
-                "                \"creditLevel\": null,\n" +
-                "                \"possessNature\": null,\n" +
-                "                \"businessSource\": null,\n" +
-                "                \"businessSort\": null,\n" +
-                "                \"occupationCode\": null,\n" +
-                "                \"educationCode\": null,\n" +
-                "                \"bank\": null,\n" +
-                "                \"accountName\": null,\n" +
-                "                \"account\": null,\n" +
-                "                \"linkerName\": null,\n" +
-                "                \"postAddress\": \"\",\n" +
-                "                \"postCode\": null,\n" +
-                "                \"phoneNumber\": null,\n" +
-                "                \"faxNumber\": null,\n" +
-                "                \"mobile\": \"18300000000\",\n" +
-                "                \"netAddress\": null,\n" +
-                "                \"email\": \"\",\n" +
-                "                \"dateValid\": null,\n" +
-                "                \"startDate\": \"2020-01-08 00:00:00\",\n" +
-                "                \"endDate\": \"2021-01-07 00:00:00\",\n" +
-                "                \"benefitFlag\": null,\n" +
-                "                \"benefitRate\": null,\n" +
-                "                \"drivingLicenseNo\": null,\n" +
-                "                \"changelessFlag\": null,\n" +
-                "                \"sex\": \"1\",\n" +
-                "                \"age\": 40,\n" +
-                "                \"marriage\": null,\n" +
-                "                \"driverAddress\": null,\n" +
-                "                \"peccancy\": null,\n" +
-                "                \"acceptLicenseDate\": null,\n" +
-                "                \"receiveLicenseYear\": null,\n" +
-                "                \"drivingYears\": null,\n" +
-                "                \"causeTroubleTimes\": null,\n" +
-                "                \"awardLicenseOrgan\": null,\n" +
-                "                \"drivingCarType\": null,\n" +
-                "                \"countryCode\": null,\n" +
-                "                \"versionNo\": null,\n" +
-                "                \"auditstatus\": null,\n" +
-                "                \"flag\": null,\n" +
-                "                \"warningFlag\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"blackFlag\": null,\n" +
-                "                \"importSerialNo\": null,\n" +
-                "                \"groupCode\": null,\n" +
-                "                \"groupName\": null,\n" +
-                "                \"dweller\": null,\n" +
-                "                \"customerLevel\": null,\n" +
-                "                \"insuredPYName\": null,\n" +
-                "                \"groupNo\": null,\n" +
-                "                \"itemNo\": null,\n" +
-                "                \"importFlag\": null,\n" +
-                "                \"smsFlag\": null,\n" +
-                "                \"emailFlag\": null,\n" +
-                "                \"sendPhone\": null,\n" +
-                "                \"sendEmail\": null,\n" +
-                "                \"subPolicyNo\": null,\n" +
-                "                \"socialSecurityNo\": null,\n" +
-                "                \"electronicflag\": null,\n" +
-                "                \"insuredSort\": null,\n" +
-                "                \"isHealthSurvey\": null,\n" +
-                "                \"InsuredNatures\": [\n" +
-                "                    {\n" +
-                "                        \"id\": {\n" +
-                "                            \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                            \"serialNo\": 1\n" +
-                "                        },\n" +
-                "                        \"serialNo\": null,\n" +
-                "                        \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                        \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                        \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                        \"insuredFlag\": null,\n" +
-                "                        \"sex\": \"1\",\n" +
-                "                        \"age\": 40,\n" +
-                "                        \"birthday\": \"1980-01-01\",\n" +
-                "                        \"health\": null,\n" +
-                "                        \"jobTitle\": null,\n" +
-                "                        \"localWorkYears\": null,\n" +
-                "                        \"education\": null,\n" +
-                "                        \"totalWorkYears\": null,\n" +
-                "                        \"unit\": null,\n" +
-                "                        \"unitPhoneNumber\": null,\n" +
-                "                        \"unitAddress\": null,\n" +
-                "                        \"unitPostCode\": null,\n" +
-                "                        \"unitType\": null,\n" +
-                "                        \"dutyLevel\": null,\n" +
-                "                        \"dutyType\": null,\n" +
-                "                        \"occupationCode\": null,\n" +
-                "                        \"houseProperty\": null,\n" +
-                "                        \"localPoliceStation\": null,\n" +
-                "                        \"roomAddress\": null,\n" +
-                "                        \"roomPostCode\": null,\n" +
-                "                        \"selfMonthIncome\": null,\n" +
-                "                        \"familyMonthIncome\": null,\n" +
-                "                        \"incomeSource\": null,\n" +
-                "                        \"roomPhone\": null,\n" +
-                "                        \"mobile\": null,\n" +
-                "                        \"familySumQuantity\": null,\n" +
-                "                        \"marriage\": null,\n" +
-                "                        \"spouseName\": null,\n" +
-                "                        \"spouseBornDate\": null,\n" +
-                "                        \"spouseId\": null,\n" +
-                "                        \"spouseMobile\": null,\n" +
-                "                        \"spouseUnit\": null,\n" +
-                "                        \"spouseJobTitle\": null,\n" +
-                "                        \"spouseUnitPhone\": null,\n" +
-                "                        \"flag\": null,\n" +
-                "                        \"carType\": null,\n" +
-                "                        \"disablePartAndLevel\": null,\n" +
-                "                        \"moreLoanHouseFlag\": null,\n" +
-                "                        \"nation\": null,\n" +
-                "                        \"poorFlag\": null,\n" +
-                "                        \"licenseNo\": null,\n" +
-                "                        \"getLicenseDate\": null,\n" +
-                "                        \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                        \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                        \"educationCode\": null,\n" +
-                "                        \"contactNo\": null,\n" +
-                "                        \"contactName\": null,\n" +
-                "                        \"certificationDate\": null,\n" +
-                "                        \"certificationNo\": null,\n" +
-                "                        \"addressCount\": null,\n" +
-                "                        \"importFlag\": null,\n" +
-                "                        \"socialFlag\": null,\n" +
-                "                        \"cardAmount\": null,\n" +
-                "                        \"usedAmount\": null,\n" +
-                "                        \"payAmount\": null,\n" +
-                "                        \"isPoverty\": null,\n" +
-                "                        \"importSerialNo\": null\n" +
-                "                    }\n" +
-                "                ],\n" +
-                "                \"InsuredArtifs\": []\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"id\": {\n" +
-                "                    \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                    \"serialNo\": 2\n" +
-                "                },\n" +
-                "                \"serialNo\": null,\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\": \"JBU\",\n" +
-                "                \"language\": \"C\",\n" +
-                "                \"insuredType\": \"1\",\n" +
-                "                \"insuredCode\": \"8888888888888888\",\n" +
-                "                \"insuredName\": \"3092285570\",\n" +
-                "                \"insuredEName\": \"\",\n" +
-                "                \"aliasName\": null,\n" +
-                "                \"insuredAddress\": null,\n" +
-                "                \"insuredNature\": null,\n" +
-                "                \"insuredFlag\": \"010000000000000000000000000000\",\n" +
-                "                \"unitType\": null,\n" +
-                "                \"appendPrintName\": null,\n" +
-                "                \"insuredIdentity\": \"0\",\n" +
-                "                \"relateSerialNo\": 1,\n" +
-                "                \"identifyType\": \"99\",\n" +
-                "                \"identifyNumber\": \"123456\",\n" +
-                "                \"unifiedSocialCreditCode\": null,\n" +
-                "                \"creditLevel\": null,\n" +
-                "                \"possessNature\": null,\n" +
-                "                \"businessSource\": null,\n" +
-                "                \"businessSort\": null,\n" +
-                "                \"occupationCode\": null,\n" +
-                "                \"educationCode\": null,\n" +
-                "                \"bank\": null,\n" +
-                "                \"accountName\": null,\n" +
-                "                \"account\": null,\n" +
-                "                \"linkerName\": null,\n" +
-                "                \"postAddress\": \"\",\n" +
-                "                \"postCode\": null,\n" +
-                "                \"phoneNumber\": null,\n" +
-                "                \"faxNumber\": null,\n" +
-                "                \"mobile\": \"15130800000\",\n" +
-                "                \"netAddress\": null,\n" +
-                "                \"email\": \"\",\n" +
-                "                \"dateValid\": null,\n" +
-                "                \"startDate\": \"2020-01-08 00:00:00\",\n" +
-                "                \"endDate\": \"2021-01-07 00:00:00\",\n" +
-                "                \"benefitFlag\": null,\n" +
-                "                \"benefitRate\": null,\n" +
-                "                \"drivingLicenseNo\": null,\n" +
-                "                \"changelessFlag\": null,\n" +
-                "                \"sex\": \"9\",\n" +
-                "                \"age\": null,\n" +
-                "                \"marriage\": null,\n" +
-                "                \"driverAddress\": null,\n" +
-                "                \"peccancy\": null,\n" +
-                "                \"acceptLicenseDate\": null,\n" +
-                "                \"receiveLicenseYear\": null,\n" +
-                "                \"drivingYears\": null,\n" +
-                "                \"causeTroubleTimes\": null,\n" +
-                "                \"awardLicenseOrgan\": null,\n" +
-                "                \"drivingCarType\": null,\n" +
-                "                \"countryCode\": null,\n" +
-                "                \"versionNo\": null,\n" +
-                "                \"auditstatus\": null,\n" +
-                "                \"flag\": null,\n" +
-                "                \"warningFlag\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"blackFlag\": null,\n" +
-                "                \"importSerialNo\": null,\n" +
-                "                \"groupCode\": null,\n" +
-                "                \"groupName\": null,\n" +
-                "                \"dweller\": null,\n" +
-                "                \"customerLevel\": null,\n" +
-                "                \"insuredPYName\": null,\n" +
-                "                \"groupNo\": null,\n" +
-                "                \"itemNo\": null,\n" +
-                "                \"importFlag\": null,\n" +
-                "                \"smsFlag\": null,\n" +
-                "                \"emailFlag\": null,\n" +
-                "                \"sendPhone\": null,\n" +
-                "                \"sendEmail\": null,\n" +
-                "                \"subPolicyNo\": null,\n" +
-                "                \"socialSecurityNo\": null,\n" +
-                "                \"electronicflag\": null,\n" +
-                "                \"insuredSort\": null,\n" +
-                "                \"isHealthSurvey\": null,\n" +
-                "                \"InsuredNatures\": [\n" +
-                "                    {\n" +
-                "                        \"id\": {\n" +
-                "                            \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                            \"serialNo\": 2\n" +
-                "                        },\n" +
-                "                        \"serialNo\": null,\n" +
-                "                        \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                        \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                        \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                        \"insuredFlag\": null,\n" +
-                "                        \"sex\": \"9\",\n" +
-                "                        \"age\": null,\n" +
-                "                        \"birthday\": null,\n" +
-                "                        \"health\": null,\n" +
-                "                        \"jobTitle\": null,\n" +
-                "                        \"localWorkYears\": null,\n" +
-                "                        \"education\": null,\n" +
-                "                        \"totalWorkYears\": null,\n" +
-                "                        \"unit\": null,\n" +
-                "                        \"unitPhoneNumber\": null,\n" +
-                "                        \"unitAddress\": null,\n" +
-                "                        \"unitPostCode\": null,\n" +
-                "                        \"unitType\": null,\n" +
-                "                        \"dutyLevel\": null,\n" +
-                "                        \"dutyType\": null,\n" +
-                "                        \"occupationCode\": null,\n" +
-                "                        \"houseProperty\": null,\n" +
-                "                        \"localPoliceStation\": null,\n" +
-                "                        \"roomAddress\": null,\n" +
-                "                        \"roomPostCode\": null,\n" +
-                "                        \"selfMonthIncome\": null,\n" +
-                "                        \"familyMonthIncome\": null,\n" +
-                "                        \"incomeSource\": null,\n" +
-                "                        \"roomPhone\": null,\n" +
-                "                        \"mobile\": null,\n" +
-                "                        \"familySumQuantity\": null,\n" +
-                "                        \"marriage\": null,\n" +
-                "                        \"spouseName\": null,\n" +
-                "                        \"spouseBornDate\": null,\n" +
-                "                        \"spouseId\": null,\n" +
-                "                        \"spouseMobile\": null,\n" +
-                "                        \"spouseUnit\": null,\n" +
-                "                        \"spouseJobTitle\": null,\n" +
-                "                        \"spouseUnitPhone\": null,\n" +
-                "                        \"flag\": null,\n" +
-                "                        \"carType\": null,\n" +
-                "                        \"disablePartAndLevel\": null,\n" +
-                "                        \"moreLoanHouseFlag\": null,\n" +
-                "                        \"nation\": null,\n" +
-                "                        \"poorFlag\": null,\n" +
-                "                        \"licenseNo\": null,\n" +
-                "                        \"getLicenseDate\": null,\n" +
-                "                        \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                        \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                        \"educationCode\": null,\n" +
-                "                        \"contactNo\": null,\n" +
-                "                        \"contactName\": null,\n" +
-                "                        \"certificationDate\": null,\n" +
-                "                        \"certificationNo\": null,\n" +
-                "                        \"addressCount\": null,\n" +
-                "                        \"importFlag\": null,\n" +
-                "                        \"socialFlag\": null,\n" +
-                "                        \"cardAmount\": null,\n" +
-                "                        \"usedAmount\": null,\n" +
-                "                        \"payAmount\": null,\n" +
-                "                        \"isPoverty\": null,\n" +
-                "                        \"importSerialNo\": null\n" +
-                "                    }\n" +
-                "                ],\n" +
-                "                \"InsuredArtifs\": []\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Coins\": [],\n" +
-                "        \"SpecialFacs\": [],\n" +
-                "        \"Batches\": [],\n" +
-                "        \"Commissions\": [],\n" +
-                "        \"Cargos\": [],\n" +
-                "        \"Plans\": [\n" +
-                "            {\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"id\": {\n" +
-                "                    \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                    \"serialNo\": 1\n" +
-                "                },\n" +
-                "                \"endorseNo\": null,\n" +
-                "                \"payNo\": 1,\n" +
-                "                \"payReason\": \"R21\",\n" +
-                "                \"planDate\": \"2020-01-08\",\n" +
-                "                \"currency\": \"CNY\",\n" +
-                "                \"subsidyrate\": null,\n" +
-                "                \"planFee\": 20.00,\n" +
-                "                \"delinquentFee\": 20.00,\n" +
-                "                \"flag\": null,\n" +
-                "                \"payDate\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"payType\": null,\n" +
-                "                \"exchangeNo\": null,\n" +
-                "                \"paymentcomplete\": null,\n" +
-                "                \"taxFee\": 1.13\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"CoinsDetails\": [],\n" +
-                "        \"Liabs\": [\n" +
-                "            {\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"riskCode\": \"JBU\",\n" +
-                "                \"certificateNo\": null,\n" +
-                "                \"certificateDate\": null,\n" +
-                "                \"certificateDepart\": null,\n" +
-                "                \"practiceDate\": null,\n" +
-                "                \"businessDetail\": null,\n" +
-                "                \"businessSite\": \"爱保科技\",\n" +
-                "                \"insureAreaCode\": null,\n" +
-                "                \"insureArea\": null,\n" +
-                "                \"saleArea\": null,\n" +
-                "                \"officeType\": null,\n" +
-                "                \"bkWardStartDate\": null,\n" +
-                "                \"bkWardEndDate\": null,\n" +
-                "                \"staffCount\": null,\n" +
-                "                \"preTurnOver\": null,\n" +
-                "                \"nowTurnOver\": null,\n" +
-                "                \"electricPower\": null,\n" +
-                "                \"remark\": null,\n" +
-                "                \"claimBase\": \"1\",\n" +
-                "                \"flag\": null,\n" +
-                "                \"guaranteeArea\": null,\n" +
-                "                \"familyMembers\": null,\n" +
-                "                \"goodsName\": null,\n" +
-                "                \"hazardLevel\": null,\n" +
-                "                \"totleCount\": null,\n" +
-                "                \"quantity\": null,\n" +
-                "                \"itemInfo\": null,\n" +
-                "                \"disputeType\": null,\n" +
-                "                \"court\": null,\n" +
-                "                \"lineType\": null,\n" +
-                "                \"insuredType\": null,\n" +
-                "                \"isSignInsured\": null,\n" +
-                "                \"collectBsae\": null,\n" +
-                "                \"businessClass\": null,\n" +
-                "                \"companyLevel\": null,\n" +
-                "                \"companyType\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"singlePayRate\": null,\n" +
-                "                \"ensureCardNo\": null\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Confines\": [],\n" +
-                "        \"Rations\": [\n" +
-                "            {\n" +
-                "                \"id\": {\n" +
-                "                    \"modeCode\": \"1\",\n" +
-                "                    \"pkey\": \"TJBU202032046000005683\"\n" +
-                "                },\n" +
-                "                \"modeName\": \"虚拟财产保险060天至060天\",\n" +
-                "                \"planCode\": \"JBUYY00001\",\n" +
-                "                \"serialNo\": null,\n" +
-                "                \"itinerary\": null,\n" +
-                "                \"sex\": null,\n" +
-                "                \"age\": null,\n" +
-                "                \"occupationCode\": null,\n" +
-                "                \"jobTitle\": null,\n" +
-                "                \"quantity\": 1,\n" +
-                "                \"rationCount\": 1,\n" +
-                "                \"groupDiscount\": null,\n" +
-                "                \"insuredFlag\": null,\n" +
-                "                \"countryCode\": null,\n" +
-                "                \"sickRoomLevel\": null,\n" +
-                "                \"journeyBack\": null,\n" +
-                "                \"journeyEnd\": null,\n" +
-                "                \"journeyStart\": null,\n" +
-                "                \"remark\": null,\n" +
-                "                \"updateFlag\": null,\n" +
-                "                \"flag\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"discountType\": null,\n" +
-                "                \"discountMode\": null,\n" +
-                "                \"discountValue\": null,\n" +
-                "                \"unitPremium\": null,\n" +
-                "                \"premiumB4Discount\": null,\n" +
-                "                \"premium\": null,\n" +
-                "                \"planTypeCode\": null\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Items\": [],\n" +
-                "        \"Fees\": [\n" +
-                "            {\n" +
-                "                \"id\": {\n" +
-                "                    \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                    \"currency\": \"CNY\"\n" +
-                "                },\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\": \"JBU\",\n" +
-                "                \"amount\": 200.00,\n" +
-                "                \"premiumB4Discount\": null,\n" +
-                "                \"premium\": 20.00,\n" +
-                "                \"flag\": \"\",\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"sumTaxFee\": 1.13,\n" +
-                "                \"sumTaxFee_ys\": 0.00,\n" +
-                "                \"sumNetPremium\": 18.87,\n" +
-                "                \"sumTaxFee_gb\": 0.00,\n" +
-                "                \"sumTaxFee_lb\": 0.00\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Renewals\": [],\n" +
-                "        \"CargoDetails\": [],\n" +
-                "        \"Cprotocols\": [],\n" +
-                "        \"Clauses\": [],\n" +
-                "        \"Contributions\": [],\n" +
-                "        \"Commons\": [\n" +
-                "            {\n" +
-                "                \"pkey\": \"TJBU202032046000005683\",\n" +
-                "                \"tkey\": \"2020-01-15 09:01:45\",\n" +
-                "                \"proposalNo\": \"TJBU202032046000005683\",\n" +
-                "                \"specialFlag\": \"               \",\n" +
-                "                \"ext1\": null,\n" +
-                "                \"ext2\": null,\n" +
-                "                \"ext3\": null,\n" +
-                "                \"resourceCode\": null,\n" +
-                "                \"resourceName\": null,\n" +
-                "                \"qualityLevel\": null,\n" +
-                "                \"insertTimeForHis\": \"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\": \"2020-01-15 09:02:03\",\n" +
-                "                \"newBusinessNature\": \"020\",\n" +
-                "                \"scmsAuditNotion\": null,\n" +
-                "                \"pay_method\": null,\n" +
-                "                \"platformProjectCode\": \"CPI000493\",\n" +
-                "                \"handler1Code_uni\": \"1232061117\",\n" +
-                "                \"handlerCode_uni\": \" \",\n" +
-                "                \"commonFlag\": \"               \",\n" +
-                "                \"otherPolicyName\": null,\n" +
-                "                \"groupName\": null,\n" +
-                "                \"isHPDriveCus\": \"0\",\n" +
-                "                \"startTime\": null,\n" +
-                "                \"endTime\": null,\n" +
-                "                \"salesCode\": null,\n" +
-                "                \"electronic\": \"0\",\n" +
-                "                \"electronicTitle\": null,\n" +
-                "                \"electronicPhone\": null,\n" +
-                "                \"socialinsPay\": null,\n" +
-                "                \"socialinsNo\": null,\n" +
-                "                \"projectCode\": \"\",\n" +
-                "                \"projectName\": null,\n" +
-                "                \"priorityFlag\": null,\n" +
-                "                \"priorityMessage\": null,\n" +
-                "                \"isAccredit\": null,\n" +
-                "                \"accreditType\": null,\n" +
-                "                \"accreditDate\": null,\n" +
-                "                \"bankFlowNo\": null,\n" +
-                "                \"sealNum\": null,\n" +
-                "                \"policyNo\": \"PJBU202032046000005452\",\n" +
-                "                \"classify\": null,\n" +
-                "                \"overSeas\": \"0\",\n" +
-                "                \"isClaim\": null,\n" +
-                "                \"isCondition\": null,\n" +
-                "                \"unifiedInsurance\": \" \",\n" +
-                "                \"electronicEmail\": null,\n" +
-                "                \"isRenewalTeam\": null,\n" +
-                "                \"keyAccountCode\": null,\n" +
-                "                \"isRenewal\": null,\n" +
-                "                \"isGIvesff\": null,\n" +
-                "                \"isStatistics\": null,\n" +
-                "                \"isInsureRate\": null,\n" +
-                "                \"busiAccountType\": \" \",\n" +
-                "                \"isPStage\": \" \",\n" +
-                "                \"visaCode\": null,\n" +
-                "                \"visaPrintCode\": null,\n" +
-                "                \"visaNo\": null,\n" +
-                "                \"isVisaCancel\": null,\n" +
-                "                \"internetCode\": null,\n" +
-                "                \"isPoverty\": null,\n" +
-                "                \"isTargetedPoverty\": null,\n" +
-                "                \"coMakecom\": null,\n" +
-                "                \"coOperatorcode\": null,\n" +
-                "                \"inputType\": null,\n" +
-                "                \"deliverFlag\": null,\n" +
-                "                \"deliverType\": null,\n" +
-                "                \"addressee\": null,\n" +
-                "                \"deliverTel\": null,\n" +
-                "                \"deliverAddr\": null,\n" +
-                "                \"isVsCard\": null,\n" +
-                "                \"subinformation\": null,\n" +
-                "                \"isRapidCalPremium\": null,\n" +
-                "                \"externalPayFlag\": null,\n" +
-                "                \"ownerFlag\": null,\n" +
-                "                \"signTag\": null,\n" +
-                "                \"signState\": null,\n" +
-                "                \"transFlag\": null,\n" +
-                "                \"invokeFlag\": null,\n" +
-                "                \"invoiceCode\": null,\n" +
-                "                \"reviewerName\": null,\n" +
-                "                \"receivableFlag\": null,\n" +
-                "                \"internationalFlag\": null\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Coupon\": null\n" +
-                "    }\n" +
-                "}";
+       String value = "{\"status\":0,\"statusText\":\"Success\",\"data\":{\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"classCode\":\"06\",\"riskCode\":\"EAJ\",\"projectCode\":null,\"contractNo\":null,\"policySort\":\"1\",\"businessNature\":\"1\",\"language\":\"C\",\"policyType\":\"99\",\"agriFlag\":\"0\",\"operateDate\":\"2020-11-24 16:22:32\",\"startDate\":\"2020-11-25 00:00:00\",\"endDate\":\"2020-12-02 00:00:00\",\"startHour\":0,\"endHour\":24,\"disRate\":0.0000,\"sumValue\":81.00,\"sumAmount\":1875200.00,\"sumDiscount\":0.00,\"sumPremiumB4Discount\":null,\"couponAmount\":null,\"couponPremium\":null,\"minPremium\":null,\"sumPremium\":81.00,\"sumSubPrem\":50.40,\"sumQuantity\":1,\"policyCount\":null,\"judicalScope\":\"01\",\"argueSolution\":\"1\",\"arbitBoardName\":\"\",\"payTimes\":1,\"makeCom\":\"33080101\",\"operateSite\":null,\"comCode\":\"33080101\",\"handlerCode\":\"83318895\",\"handler1Code\":\"83318895\",\"checkFlag\":\"4\",\"checkUpCode\":null,\"checkOpinion\":null,\"underWriteCode\":\"0\",\"underWriteName\":null,\"operatorCode\":\"83318895\",\"inputTime\":\"2020-11-24 16:22:32\",\"underWriteEndDate\":null,\"statisticsYM\":null,\"agentCode\":\"000011000001\",\"coinsFlag\":\"00\",\"reinsFlag\":\"0000000000\",\"allinsFlag\":\"0\",\"underWriteFlag\":\"0\",\"jfeeFlag\":\"1\",\"inputFlag\":\"0\",\"undwrtSubmitDate\":null,\"othFlag\":\"000000YY00\",\"remark\":null,\"checkCode\":null,\"flag\":\"A\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"payMode\":\"2\",\"payCode\":null,\"crossFlag\":\"0\",\"batchGroupNo\":null,\"sumTaxFee\":4.60,\"sumNetPremium\":76.40,\"prePremium\":0.00,\"pkey\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"currency\":\"CNY\",\"dmFlag\":\"A\",\"handler1Code_uni\":\"1133134327\",\"handlerCode_uni\":\"1133134327\",\"isAutoePolicy\":\"1\",\"salesCode\":\"A000002258\",\"personOri\":\"11\",\"productCode\":null,\"productName\":\"环球游境外旅行保险\",\"approverCode\":null,\"pureRate\":0.0000,\"discount\":0.000000,\"insuredCount\":null,\"auditNo\":null,\"auditNoToE\":null,\"crossSellType\":\"3\",\"inputSumPremium\":null,\"dutySumNetPremium\":null,\"freeSumNetPremium\":null,\"orderNo\":null,\"orderFlag\":null,\"policyPageVo\":null,\"prpCmainAccs\":[{\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"visitCountry\":\"HKG\",\"constructName\":null,\"companyType\":null,\"companyClass\":null,\"constructAddress\":null,\"constructType\":null,\"engineerCost\":null,\"saleArea\":null,\"quantity\":null,\"endSite\":null,\"tourGroupNo\":null,\"flag\":null,\"travelPurpose\":\"01\",\"driverCategory\":\"999\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\",\"pkey\":\"TEAJ202033086000000226\",\"spouseCount\":null,\"sonCount\":null,\"dauCount\":null,\"fatCount\":null,\"motCount\":null,\"spofatCount\":null,\"spomotCount\":null,\"othCount\":null}],\"prpCmainExts\":[],\"prpCmainBonds\":[],\"prpCmainCredits\":[],\"prpCextendInfos\":[],\"prpCmainAirLines\":[],\"prpCcommissions\":[],\"prpCcoeffs\":[],\"prpCmainAgris\":[],\"prpCprojects\":[],\"prpCprofitFactors\":[],\"prpCitemCreditOths\":[],\"prpCclauseplans\":[],\"prpCpayeeAccounts\":[],\"prpCinsuredCreditInvests\":[],\"actualProduct\":null,\"prpCmainExtraVo\":null,\"Employees\":[],\"Props\":[],\"AgentDetails\":[],\"shipDrivers\":[],\"Drivers\":[],\"Addresses\":[],\"InsuredIdvLists\":[],\"Crosses\":[],\"Subs\":[],\"Agents\":[{\"tkey\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"roleCode\":\"83318895\",\"payNo\":1,\"serialNo\":1},\"agreementNo\":\"FTI3300000020191100033045\",\"roleType\":\"2\",\"roleName\":\"邱佳鑫\",\"currency\":\"CNY\",\"costRate\":100.0000,\"costFee\":11.46,\"remark\":\"\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\"}],\"Constructs\":[],\"Itemkinds\":[{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":1},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"020026\",\"clauseName\":\"附加环球游境外旅行旅程取消或缩短保险条款（2009版）\",\"kindCode\":\"020046\",\"kindName\":\"旅程取消或缩短费用补偿\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":5000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":5000.00,\"ratePeriod\":null,\"rate\":0.02000000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.10,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.10,\"premiumB4Discount\":null,\"premium\":0.10,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.01,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.09,\"allTaxFee\":0.01,\"allNetPremium\":0.09,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":2},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"020027\",\"clauseName\":\"附加环球游境外旅行行李和随身物品损失保险条款（2009版）\",\"kindCode\":\"020051\",\"kindName\":\"行李和随身物品丢失赔偿\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":5000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":5000.00,\"ratePeriod\":null,\"rate\":0.02000000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.10,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.10,\"premiumB4Discount\":null,\"premium\":0.10,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.01,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.09,\"allTaxFee\":0.01,\"allNetPremium\":0.09,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":3},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"020028\",\"clauseName\":\"附加环球游境外旅行旅行证件丢失保险条款（2009版）\",\"kindCode\":\"020047\",\"kindName\":\"旅行证件丢失赔偿\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":6000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":6000.00,\"ratePeriod\":null,\"rate\":0.01666667000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.10,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.10,\"premiumB4Discount\":null,\"premium\":0.10,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.01,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.09,\"allTaxFee\":0.01,\"allNetPremium\":0.09,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":4},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"020029\",\"clauseName\":\"附加环球游境外旅行航班延误保险条款\",\"kindCode\":\"020042\",\"kindName\":\"航班延误赔偿\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":1200.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":1200.00,\"ratePeriod\":null,\"rate\":0.16666667000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.20,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.20,\"premiumB4Discount\":null,\"premium\":0.20,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.01,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.19,\"allTaxFee\":0.01,\"allNetPremium\":0.19,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":5},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"060065\",\"clauseName\":\"附加环球游境外旅行亲友慰问探访保险条款（2009版）\",\"kindCode\":\"060114\",\"kindName\":\"慰问探访交通费用补偿、津贴给付\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":8000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":8000.00,\"ratePeriod\":null,\"rate\":0.01250000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.10,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.10,\"premiumB4Discount\":null,\"premium\":0.10,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.01,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.09,\"allTaxFee\":0.01,\"allNetPremium\":0.09,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":6},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"060066\",\"clauseName\":\"附加环球游境外旅行身故遗体送返保险条款（2009版）\",\"kindCode\":\"060115\",\"kindName\":\"遗体送返保险金、丧葬保险金\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":100000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":100000.00,\"ratePeriod\":null,\"rate\":0.00500000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.50,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.50,\"premiumB4Discount\":null,\"premium\":0.50,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.03,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.47,\"allTaxFee\":0.03,\"allNetPremium\":0.47,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":7},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"060067\",\"clauseName\":\"环球游境外旅行意外伤害保险条款（2009版）\",\"kindCode\":\"060066\",\"kindName\":\"意外身故、残疾给付\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":100000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":100000.00,\"ratePeriod\":null,\"rate\":0.30600000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":30.60,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":30.60,\"premiumB4Discount\":null,\"premium\":30.60,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":1.73,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":28.87,\"allTaxFee\":1.73,\"allNetPremium\":28.87,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"1\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":8},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"060141\",\"clauseName\":\"附加高风险运动意外伤害保险条款\",\"kindCode\":\"060130\",\"kindName\":\"高风险运动意外身故、残疾\",\"itemNo\":1,\"itemCode\":\"000512\",\"itemDetailName\":\"寿命或身体\",\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":100000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":100000.00,\"ratePeriod\":null,\"rate\":0.00500000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.50,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.50,\"premiumB4Discount\":null,\"premium\":0.50,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.03,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.47,\"allTaxFee\":0.03,\"allNetPremium\":0.47,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":9},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"070002\",\"clauseName\":\"附加环球游境外旅行急性病身故保险条款（2009版）\",\"kindCode\":\"070008\",\"kindName\":\"急性病身故给付\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":100000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":100000.00,\"ratePeriod\":null,\"rate\":0.02000000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":2.00,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":2.00,\"premiumB4Discount\":null,\"premium\":2.00,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.11,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":1.89,\"allTaxFee\":0.11,\"allNetPremium\":1.89,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":10},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"070052\",\"clauseName\":\"附加环球游境外旅行紧急医疗运送和运返保险条款（2009版）\",\"kindCode\":\"070020\",\"kindName\":\"紧急医疗运送和运返费用补偿\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":450000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":450000.00,\"ratePeriod\":null,\"rate\":0.04444444000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":20.00,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":20.00,\"premiumB4Discount\":null,\"premium\":20.00,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":1.13,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":18.87,\"allTaxFee\":1.13,\"allNetPremium\":18.87,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":11},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"070053\",\"clauseName\":\"附加环球游境外旅行医疗保险条款（2009版）\",\"kindCode\":\"070103\",\"kindName\":\"门急诊及住院医疗费用补偿\",\"itemNo\":1,\"itemCode\":\"000512\",\"itemDetailName\":\"寿命或身体\",\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":300000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":300000.00,\"ratePeriod\":null,\"rate\":0.08666667000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":26.00,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":26.00,\"premiumB4Discount\":null,\"premium\":26.00,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":1.47,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":24.53,\"allTaxFee\":1.47,\"allNetPremium\":24.53,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":12},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"100004\",\"clauseName\":\"附加环球游境外旅行个人责任保险条款（2009版）\",\"kindCode\":\"100056\",\"kindName\":\"个人责任\",\"itemNo\":1,\"itemCode\":\"      \",\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":400000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":400000.00,\"ratePeriod\":null,\"rate\":0.00075000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.30,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.30,\"premiumB4Discount\":null,\"premium\":0.30,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.02,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.28,\"allTaxFee\":0.02,\"allNetPremium\":0.28,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"itemKindNo\":13},\"riskCode\":\"EAJ\",\"familyNo\":1,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"060141\",\"clauseName\":\"附加高风险运动意外伤害保险条款\",\"kindCode\":\"070116\",\"kindName\":\"高风险运动意外医疗费用补偿\",\"itemNo\":1,\"itemCode\":null,\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAJ330001l\",\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"startDate\":\"2020-11-25\",\"startHour\":0,\"endDate\":\"2020-12-01\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":1,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":300000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":300000.00,\"ratePeriod\":null,\"rate\":0.00166667000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":0.50,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":0.50,\"premiumB4Discount\":null,\"premium\":0.50,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":0.03,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":0.47,\"allTaxFee\":0.03,\"allNetPremium\":0.47,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"policyNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"2\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]}],\"Limits\":[{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":2,\"limitType\":\"000119\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":100.00,\"calculateFlag\":\"\",\"limitFlag\":\"1\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":2,\"limitType\":\"000120\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":1500.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":3,\"limitType\":\"000131\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":100.00,\"calculateFlag\":\"\",\"limitFlag\":\"1\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":4,\"limitType\":\"000217\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":300.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":4,\"limitType\":\"000470\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":5.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":5,\"limitType\":\"000117\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":10.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":5,\"limitType\":\"000161\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":300.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":6,\"limitType\":\"000187\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":15000.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":11,\"limitType\":\"000050\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":100.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":11,\"limitType\":\"000060\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":10.00,\"calculateFlag\":\"\",\"limitFlag\":\"0\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"limitGrade\":\"2\",\"limitNo\":11,\"limitType\":\"000102\",\"currency\":\"CNY\"},\"riskCode\":\"EAJ\",\"limitFee\":500.00,\"calculateFlag\":\"\",\"limitFlag\":\"1\",\"isRecorded\":\"1\",\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\"}],\"Loans\":[],\"Engages\":[{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"serialNo\":1},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\",\"riskCode\":\"EAJ\",\"clauseCode\":\"916908\",\"clauseName\":\"“东南亚旅游”境外旅行意外伤害保险特别约定\",\"clauses\":\"本保单的投保年龄为1-80周岁。71-80周岁的被保险人的“意外身故、残疾保障”保险金额减半，保险费不变。\",\"flag\":\"N\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"groupNo\":null,\"relatedFlag\":null,\"relatedContent\":null},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"serialNo\":2},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\",\"riskCode\":\"EAJ\",\"clauseCode\":\"000139\",\"clauseName\":\"旅游险单次不得退保\",\"clauses\":\"对于投保单次旅行的，保险期间开始后，投保人不得解除保险合同。\\r\\n\",\"flag\":\"N\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"groupNo\":null,\"relatedFlag\":null,\"relatedContent\":null},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"serialNo\":3},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\",\"riskCode\":\"EAJ\",\"clauseCode\":\"000141\",\"clauseName\":\"有关未成年人保额限制的约定\",\"clauses\":\"被保险人不满10周岁的，死亡保险金额不超过人民币20万元；被保险人已满10周岁但未满18周岁的，死亡保险金额不超过人民币50万元。具体内容以中国保监会关于未成年人死亡保险金额的有关规定为准。\",\"flag\":\"N\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"groupNo\":null,\"relatedFlag\":null,\"relatedContent\":null}],\"Insureds\":[{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"serialNo\":1},\"serialNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\",\"riskCode\":\"EAJ\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"8888888888888888\",\"insuredName\":\"田瑶\",\"insuredEName\":null,\"aliasName\":null,\"insuredAddress\":\"手机销售保单未采集地址信息\",\"insuredNature\":\"3\",\"insuredFlag\":\"10000000000000000000000000000A\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"9\",\"relateSerialNo\":null,\"identifyType\":\"02\",\"identifyNumber\":\"36232119920921752X\",\"unifiedSocialCreditCode\":null,\"creditLevel\":null,\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":null,\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":null,\"postCode\":null,\"phoneNumber\":\"17501021027\",\"faxNumber\":null,\"mobile\":\"17501021027\",\"netAddress\":null,\"email\":null,\"dateValid\":null,\"startDate\":\"2020-11-25 00:00:00\",\"endDate\":\"2020-12-01 00:00:00\",\"benefitFlag\":\"N\",\"benefitRate\":0.00,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":null,\"age\":28,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":null,\"flag\":null,\"warningFlag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"blackFlag\":null,\"importSerialNo\":null,\"groupCode\":null,\"groupName\":null,\"dweller\":\"1\",\"customerLevel\":null,\"insuredPYName\":null,\"groupNo\":null,\"itemNo\":null,\"importFlag\":null,\"smsFlag\":null,\"emailFlag\":null,\"sendPhone\":null,\"sendEmail\":null,\"subPolicyNo\":null,\"socialSecurityNo\":null,\"electronicflag\":null,\"insuredSort\":null,\"isHealthSurvey\":null,\"InsuredNatures\":[],\"InsuredArtifs\":[]},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"serialNo\":2},\"serialNo\":null,\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\",\"riskCode\":\"EAJ\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"8888888888888888\",\"insuredName\":\"田瑶\",\"insuredEName\":\"TIAN YAO \",\"aliasName\":null,\"insuredAddress\":\"手机销售保单未采集地址信息\",\"insuredNature\":\"3\",\"insuredFlag\":\"010000000000000000000000000000\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"9\",\"relateSerialNo\":null,\"identifyType\":\"02\",\"identifyNumber\":\"36232119920921752X\",\"unifiedSocialCreditCode\":null,\"creditLevel\":null,\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":null,\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":null,\"postCode\":null,\"phoneNumber\":null,\"faxNumber\":null,\"mobile\":null,\"netAddress\":null,\"email\":null,\"dateValid\":null,\"startDate\":\"2020-11-25 00:00:00\",\"endDate\":\"2020-12-01 00:00:00\",\"benefitFlag\":\"N\",\"benefitRate\":0.00,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":\"2\",\"age\":28,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":null,\"flag\":null,\"warningFlag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"blackFlag\":null,\"importSerialNo\":null,\"groupCode\":null,\"groupName\":null,\"dweller\":\"1\",\"customerLevel\":null,\"insuredPYName\":null,\"groupNo\":null,\"itemNo\":null,\"importFlag\":null,\"smsFlag\":null,\"emailFlag\":null,\"sendPhone\":null,\"sendEmail\":null,\"subPolicyNo\":null,\"socialSecurityNo\":null,\"electronicflag\":null,\"insuredSort\":null,\"isHealthSurvey\":null,\"InsuredNatures\":[],\"InsuredArtifs\":[]}],\"Coins\":[],\"SpecialFacs\":[],\"Batches\":[],\"Commissions\":[{\"tkey\":\"2020-11-24 16:22:36\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"serialNo\":1},\"agreementNo\":\"FTI3300000020191100033045\",\"customerGroupCode\":\"1\",\"costType\":\"01\",\"payNo\":1,\"riskCode\":\"EAJ\",\"clauseCode\":\"PUB\",\"kindCode\":\"PUB\",\"sumPremium\":76.40,\"costRate\":15.00,\"costRateUpper\":50.00,\"adjustFlag\":\"1\",\"upperFlag\":\"1\",\"auditRate\":null,\"auditFlag\":\"1\",\"coinsRate\":100.0000,\"coinsDeduct\":\"\",\"currency\":\"CNY\",\"costFee\":11.46,\"configCode\":\"1\",\"amortizeFlag\":null,\"clauseKindFlag\":null,\"remark\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"levelRate\":null,\"levelMaxRate\":null,\"isNetFlag\":\"1\",\"queryNo\":\"TEAJ202033086000000227\",\"xsfyRateUpper\":50.00,\"isUpperFlag\":null,\"isAmortizeFlag\":null}],\"Cargos\":[],\"Plans\":[{\"tkey\":\"2020-11-24 16:22:34\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"serialNo\":1},\"endorseNo\":null,\"payNo\":1,\"payReason\":\"R21\",\"planDate\":\"2020-11-25\",\"currency\":\"CNY\",\"subsidyrate\":null,\"planFee\":81.00,\"delinquentFee\":81.00,\"flag\":null,\"payDate\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"payType\":null,\"exchangeNo\":null,\"paymentcomplete\":null,\"taxFee\":4.60}],\"CoinsDetails\":[],\"Liabs\":[],\"Confines\":[],\"Rations\":[{\"id\":{\"modeCode\":\"1\",\"pkey\":\"TEAJ202033086000000226\"},\"modeName\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"planCode\":\"EAJ330001l\",\"serialNo\":13,\"itinerary\":null,\"sex\":null,\"age\":null,\"occupationCode\":null,\"jobTitle\":null,\"quantity\":1,\"rationCount\":1,\"groupDiscount\":null,\"insuredFlag\":null,\"countryCode\":null,\"sickRoomLevel\":null,\"journeyBack\":null,\"journeyEnd\":null,\"journeyStart\":null,\"remark\":null,\"updateFlag\":\"1\",\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\",\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"discountType\":null,\"discountMode\":null,\"discountValue\":null,\"unitPremium\":null,\"premiumB4Discount\":null,\"premium\":null,\"planTypeCode\":null}],\"Items\":[],\"Fees\":[{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"currency\":\"CNY\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"tkey\":\"2020-11-24 16:22:34\",\"riskCode\":\"EAJ\",\"amount\":1875200.00,\"premiumB4Discount\":null,\"premium\":81.00,\"flag\":\"\",\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"sumTaxFee\":4.60,\"sumTaxFee_ys\":0.00,\"sumNetPremium\":76.40,\"sumTaxFee_gb\":0.00,\"sumTaxFee_lb\":0.00}],\"Renewals\":[],\"CargoDetails\":[],\"Cprotocols\":[],\"Clauses\":[{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"020026\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行旅程取消或缩短保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"020027\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行行李和随身物品损失保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"020028\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行旅行证件丢失保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"020029\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行航班延误保险条款\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"060065\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行亲友慰问探访保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"060066\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行身故遗体送返保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"060067\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"环球游境外旅行意外伤害保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"060141\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加高风险运动意外伤害保险条款\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"070002\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行急性病身故保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"070052\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行紧急医疗运送和运返保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"070053\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行医疗保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"},{\"id\":{\"pkey\":\"TEAJ202033086000000226\",\"clauseCode\":\"100004\"},\"proposalNo\":\"TEAJ202033086000000226\",\"policyNo\":null,\"riskCode\":\"EAJ\",\"clauseName\":\"附加环球游境外旅行个人责任保险条款（2009版）\",\"clauseDesc\":null,\"flag\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"tkey\":\"2020-11-24 16:22:34\"}],\"Contributions\":[],\"Commons\":[{\"pkey\":\"TEAJ202033086000000226\",\"tkey\":\"2020-11-24 16:22:34\",\"proposalNo\":\"TEAJ202033086000000226\",\"specialFlag\":\"0 0\",\"ext1\":\"RBETH0001\",\"ext2\":null,\"ext3\":\"MST\",\"resourceCode\":null,\"resourceName\":null,\"qualityLevel\":null,\"insertTimeForHis\":\"2020-11-24 16:22:36\",\"operateTimeForHis\":\"2020-11-24 16:22:36\",\"newBusinessNature\":\"110\",\"scmsAuditNotion\":\"无\",\"pay_method\":null,\"platformProjectCode\":\"MST000001\",\"handler1Code_uni\":\"1133134327\",\"handlerCode_uni\":\"1133134327\",\"commonFlag\":\"0 0 0     0\",\"otherPolicyName\":null,\"groupName\":null,\"isHPDriveCus\":\"0\",\"startTime\":\"00:00\",\"endTime\":\"00:00\",\"salesCode\":\"A000002258\",\"electronic\":\"0\",\"electronicTitle\":null,\"electronicPhone\":null,\"socialinsPay\":null,\"socialinsNo\":null,\"projectCode\":null,\"projectName\":null,\"priorityFlag\":null,\"priorityMessage\":null,\"isAccredit\":\"1\",\"accreditType\":\"1\",\"accreditDate\":\"2020-11-24 00:00:00\",\"bankFlowNo\":null,\"sealNum\":null,\"policyNo\":null,\"classify\":null,\"overSeas\":\"0\",\"isClaim\":null,\"isCondition\":null,\"unifiedInsurance\":null,\"electronicEmail\":null,\"isRenewalTeam\":null,\"keyAccountCode\":null,\"isRenewal\":\"0\",\"isGIvesff\":null,\"isStatistics\":null,\"isInsureRate\":null,\"busiAccountType\":null,\"isPStage\":\"0\",\"visaCode\":null,\"visaPrintCode\":\"EEEAJA00180\",\"visaNo\":null,\"isVisaCancel\":null,\"internetCode\":null,\"isPoverty\":null,\"isTargetedPoverty\":null,\"coMakecom\":null,\"coOperatorcode\":null,\"inputType\":null,\"deliverFlag\":null,\"deliverType\":null,\"addressee\":null,\"deliverTel\":null,\"deliverAddr\":null,\"isVsCard\":null,\"subinformation\":null,\"isRapidCalPremium\":null,\"externalPayFlag\":null,\"ownerFlag\":\"2\",\"signTag\":null,\"signState\":null,\"transFlag\":null,\"invokeFlag\":null,\"invoiceCode\":null,\"reviewerName\":null,\"receivableFlag\":null,\"internationalFlag\":null,\"policyFactorFlag\":null,\"recallFlag\":\"1\"}],\"Coupon\":null,\"InsuredCataLists\":[]}}";
+       String dbvalue = "[{\"netpremium\":0.09,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.10,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"020026\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行旅程取消或缩短保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":1,\"unitamount\":5000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.10,\"alltaxfee\":0.01,\"rate\":0.02000000000,\"allnetpremium\":0.09,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.10,\"amount\":5000.00,\"quantity\":1.00,\"kindname\":\"旅程取消或缩短费用补偿\",\"shortrate\":100.0000,\"kindcode\":\"020046\",\"taxfee\":0.01,\"groupno\":1},{\"netpremium\":0.09,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.10,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"020027\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行行李和随身物品损失保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":2,\"unitamount\":5000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.10,\"alltaxfee\":0.01,\"rate\":0.02000000000,\"allnetpremium\":0.09,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.10,\"amount\":5000.00,\"quantity\":1.00,\"kindname\":\"行李和随身物品丢失赔偿\",\"shortrate\":100.0000,\"kindcode\":\"020051\",\"taxfee\":0.01,\"groupno\":1},{\"netpremium\":0.09,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.10,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"020028\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行旅行证件丢失保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":3,\"unitamount\":6000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.10,\"alltaxfee\":0.01,\"rate\":0.01666667000,\"allnetpremium\":0.09,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.10,\"amount\":6000.00,\"quantity\":1.00,\"kindname\":\"旅行证件丢失赔偿\",\"shortrate\":100.0000,\"kindcode\":\"020047\",\"taxfee\":0.01,\"groupno\":1},{\"netpremium\":0.19,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.20,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"020029\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行航班延误保险条款\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":4,\"unitamount\":1200.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.20,\"alltaxfee\":0.01,\"rate\":0.16666667000,\"allnetpremium\":0.19,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.20,\"amount\":1200.00,\"quantity\":1.00,\"kindname\":\"航班延误赔偿\",\"shortrate\":100.0000,\"kindcode\":\"020042\",\"taxfee\":0.01,\"groupno\":1},{\"netpremium\":0.09,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.10,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"060065\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行亲友慰问探访保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":5,\"unitamount\":8000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.10,\"alltaxfee\":0.01,\"rate\":0.01250000000,\"allnetpremium\":0.09,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.10,\"amount\":8000.00,\"quantity\":1.00,\"kindname\":\"慰问探访交通费用补偿、津贴给付\",\"shortrate\":100.0000,\"kindcode\":\"060114\",\"taxfee\":0.01,\"groupno\":1},{\"netpremium\":0.47,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.50,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"060066\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行身故遗体送返保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":6,\"unitamount\":100000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.50,\"alltaxfee\":0.03,\"rate\":0.00500000000,\"allnetpremium\":0.47,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.50,\"amount\":100000.00,\"quantity\":1.00,\"kindname\":\"遗体送返保险金、丧葬保险金\",\"shortrate\":100.0000,\"kindcode\":\"060115\",\"taxfee\":0.03,\"groupno\":1},{\"netpremium\":28.87,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":30.60,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"1\",\"clausecode\":\"060067\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"环球游境外旅行意外伤害保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":7,\"unitamount\":100000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":30.60,\"alltaxfee\":1.73,\"rate\":0.30600000000,\"allnetpremium\":28.87,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":30.60,\"amount\":100000.00,\"quantity\":1.00,\"kindname\":\"意外身故、残疾给付\",\"shortrate\":100.0000,\"kindcode\":\"060066\",\"taxfee\":1.73,\"groupno\":1},{\"netpremium\":0.47,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.50,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"060141\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加高风险运动意外伤害保险条款\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"000512\",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":8,\"itemdetailname\":\"寿命或身体\",\"unitamount\":100000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.50,\"alltaxfee\":0.03,\"rate\":0.00500000000,\"allnetpremium\":0.47,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.50,\"amount\":100000.00,\"quantity\":1.00,\"kindname\":\"高风险运动意外身故、残疾\",\"shortrate\":100.0000,\"kindcode\":\"060130\",\"taxfee\":0.03,\"groupno\":1},{\"netpremium\":1.89,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":2.00,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"070002\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行急性病身故保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":9,\"unitamount\":100000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":2.00,\"alltaxfee\":0.11,\"rate\":0.02000000000,\"allnetpremium\":1.89,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":2.00,\"amount\":100000.00,\"quantity\":1.00,\"kindname\":\"急性病身故给付\",\"shortrate\":100.0000,\"kindcode\":\"070008\",\"taxfee\":0.11,\"groupno\":1},{\"netpremium\":18.87,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":20.00,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"070052\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行紧急医疗运送和运返保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":10,\"unitamount\":450000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":20.00,\"alltaxfee\":1.13,\"rate\":0.04444444000,\"allnetpremium\":18.87,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":20.00,\"amount\":450000.00,\"quantity\":1.00,\"kindname\":\"紧急医疗运送和运返费用补偿\",\"shortrate\":100.0000,\"kindcode\":\"070020\",\"taxfee\":1.13,\"groupno\":1},{\"netpremium\":24.53,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":26.00,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"070053\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行医疗保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"000512\",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":11,\"itemdetailname\":\"寿命或身体\",\"unitamount\":300000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":26.00,\"alltaxfee\":1.47,\"rate\":0.08666667000,\"allnetpremium\":24.53,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":26.00,\"amount\":300000.00,\"quantity\":1.00,\"kindname\":\"门急诊及住院医疗费用补偿\",\"shortrate\":100.0000,\"kindcode\":\"070103\",\"taxfee\":1.47,\"groupno\":1},{\"netpremium\":0.28,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.30,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"100004\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加环球游境外旅行个人责任保险条款（2009版）\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"itemcode\":\"      \",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":12,\"unitamount\":400000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.30,\"alltaxfee\":0.02,\"rate\":0.00075000000,\"allnetpremium\":0.28,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.30,\"amount\":400000.00,\"quantity\":1.00,\"kindname\":\"个人责任\",\"shortrate\":100.0000,\"kindcode\":\"100056\",\"taxfee\":0.02,\"groupno\":1},{\"netpremium\":0.47,\"endhour\":24,\"modecode\":\"EAJ330001l\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-11-25\",\"calpremium\":0.50,\"taxfee_gb\":0.00,\"addressno\":1,\"clauseflag\":\"2\",\"clausecode\":\"060141\",\"operatetimeforhis\":1606206156000,\"taxrate\":6.00,\"clausename\":\"附加高风险运动意外伤害保险条款\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2020-12-01\",\"taxflag\":\"2\",\"modename\":\"“东南亚旅游”手机方案豪华型001天至007天\",\"inserttimeforhis\":1606206156000,\"taxfee_lb\":0.00,\"riskcode\":\"EAJ\",\"itemkindno\":13,\"unitamount\":300000.00,\"calculateflag\":\"1\",\"familyno\":1,\"proposalno\":\"TEAJ202033086000000226\",\"shortrateflag\":\"3\",\"premium\":0.50,\"alltaxfee\":0.03,\"rate\":0.00166667000,\"allnetpremium\":0.47,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAJ202033086000000226\",\"tkey\":1606206154000,\"unitpremium\":0.50,\"amount\":300000.00,\"quantity\":1.00,\"kindname\":\"高风险运动意外医疗费用补偿\",\"shortrate\":100.0000,\"kindcode\":\"070116\",\"taxfee\":0.03,\"groupno\":1}]";
+        JSONArray objects1 = JSONArray.parseArray(dbvalue);
         JSONObject jsonObject = JSONObject.parseObject(value);
-        JSONArray resultJA = new JSONArray();
-        CompareUtil.getJAByFieldByID("Itemkinds", jsonObject, resultJA);
-        System.out.println(resultJA);
-
+        JSONArray objects = new JSONArray();
+        StringBuffer errorMessage = new StringBuffer();
+        getJAByField("Itemkinds",jsonObject,objects);
+        //System.out.println(objects);
+        listCompare(objects,objects1,errorMessage,"Itemkinds",null);
+        System.out.println(errorMessage);
     }
 
 
