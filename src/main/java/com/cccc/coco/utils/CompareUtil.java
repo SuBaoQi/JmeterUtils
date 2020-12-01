@@ -1,51 +1,12 @@
-package com.picc.coco.utils;
+package com.cccc.coco.utils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import jdk.nashorn.internal.scripts.JS;
-
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class CompareUtil {
-
-    /**
-     * 判断两个值是否一致
-     *
-     * @param resp         第一个值（一般是接口返回的值）
-     * @param db           第二个值（一般是数据库存的值）
-     * @param errorMessage 存放错误信息
-     * @param fieldName    字段名
-     */
-    private static void valueCompare(Object resp, Object db, StringBuffer errorMessage, String fieldName) {
-        System.out.println(fieldName + "开始进行校验");
-        //null的处理，如果是null返回空字符串，如果不是null转换为String类型
-        String respStr = isNull(resp).trim();
-        String dbStr = isNull(db).trim();
-        //时间类型的处理
-        respStr = isDate(respStr);
-        dbStr = isDate(dbStr);
-        System.out.println("接口返回======"+respStr);
-        System.out.println("数据库======"+dbStr);
-        // 数字类型的值的比较
-        if (isNumber(respStr) && isNumber(dbStr)) {
-            if ((new BigDecimal(respStr)).compareTo(new BigDecimal(dbStr)) != 0) {
-                errorMessage.append(fieldName + "的值数据库和接口返回的不一致 \n");
-                errorMessage.append("接口===" + respStr + "\n");
-                errorMessage.append("数据库===" + dbStr + "\n");
-            }
-        } else {
-            if (!respStr.equals(dbStr)) {
-                errorMessage.append(fieldName + "的值数据库和接口返回的不一致 \n");
-                errorMessage.append("接口===" + respStr + "\n");
-                errorMessage.append("数据库===" + dbStr + "\n");
-            }
-        }
-    }
 
     /**
      * 从JSON数据里取出对应的节点数据
@@ -55,9 +16,14 @@ public class CompareUtil {
      * @param resultJA  返回或者请求报文的节点数据（作为listCompare的方法参数）
      */
     public static void getJAByField(String fieldName, JSONObject JS, JSONArray resultJA) {
+        //JsonObject实际上是一个map，可以通用map的方法
         Set<Entry<String, Object>> entrySet = JS.entrySet();
         boolean flag = false;
         for (Entry<String, Object> entry : entrySet) {
+           /* 1.如果响应或者返回报文的节点名与需要比较的节点名称一致，
+              2.将标志位置为true
+              3.如果报文的节点值不为空，而且类型为JsonArray，得到整个数组值，循环将这些jsonObject数据放入resultJA
+              4.或者报文的节点值不为空，而且类型为JsonObject，直接jsonObject放入resultJA*/
             if ((entry.getKey()).equals(fieldName)) {
                 flag = true;
                 if (entry.getValue() != null
@@ -73,6 +39,9 @@ public class CompareUtil {
                 break;
             }
         }
+        /*如果响应或者返回报文的节点名与需要比较的节点名称不一致
+        * 1.如果报文的节点值不为空，而且类型为JsonArray，循环得到整个数组值，递归的思想调用自己
+        * 2.或者报文的节点值不为空，而且类型为JsonObject，递归的思想调用自己*/
         if (!flag) {
             for (Entry<String, Object> entry : entrySet) {
                 if (entry.getValue() != null
@@ -83,14 +52,14 @@ public class CompareUtil {
                             getJAByField(fieldName, temJA.getJSONObject(i), resultJA);
                         }
                     } catch (Exception e) {
-                        System.out.println("JSONArray  转化失败");
+                        System.out.println("JSONArray中的数据转化JsonObject失败");
                     }
                 } else if (entry.getValue() != null
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                     try {
                         getJAByField(fieldName, (JSONObject) entry.getValue(), resultJA);
                     } catch (Exception e) {
-                        System.out.println("转化失败");
+                        System.out.println("JSONObject转化失败");
                     }
 
                 }
@@ -100,7 +69,7 @@ public class CompareUtil {
     }
 
     /**
-     * 数据库表的数据和返回报文对应接口数据校验
+     * 数据库表的数据和返回报文对应接口数据校验，思路是返回报文的节点对应一张表
      *
      * @param resps        返回或者请求报文的节点数据
      * @param db           数据库的数据
@@ -110,11 +79,12 @@ public class CompareUtil {
      */
     public static void listCompare(JSONArray resps, JSONArray db, StringBuffer errorMessage, String fieldName,
                                        ArrayList<String> ignoreList) {
+        //如果没有不需要比较的字段
         if (ignoreList == null) {
             ignoreList = new ArrayList<String>();
         }
         /**
-         * 这里更加确定ID 根据ID进行数据校验
+         * 这里确定ID 根据ID进行数据校验
          */
         ArrayList<String> ids = new ArrayList<String>();
         JSONObject temRespIdJs = null;
@@ -137,7 +107,7 @@ public class CompareUtil {
          * ID 里的字段放入到IgnoreList
          */
         ignoreList.addAll(ids);
-
+        //如果报文的条目数和数据库的条目数一样
         if (resps.size() == db.size()) {
             if (ids == null || ids.size() == 0) {
                 for (int i = 0; i < resps.size(); i++) {
@@ -311,16 +281,33 @@ public class CompareUtil {
         return temJS;
     }
 
-    public static void getFiledName(String value,ArrayList<String> dbv)
+    public static void getFiledName(String value, ArrayList<String> dbv, Map<Object, String> rdbv)
     {
         JSONObject jsonObject = JSONObject.parseObject(value).getJSONObject("data");
+        JSONArray objects = new JSONArray();
+        jsonObject.put("data",objects);
+
         Set<Entry<String, Object>> entrySet = jsonObject.entrySet();
 
         HashMap<String,String> table_field = new HashMap<String,String>();
-        table_field.put("prpCmainAirLines","prpcmain_airline");
-        table_field.put("Insureds","prpcinsured");
-        /*table_field.put("prpPmainAccs","prpPmain_Accs");
-        table_field.put("Addresses","Add_resses");*/
+        table_field.put("data","da_ta");
+        table_field.put("prpPmainAccs","prpcmain_acc");
+        table_field.put("Addresses","prpcaddress");
+        table_field.put("prpCmainExts","prpCmain_Exts");
+        table_field.put("prpCmainBonds","prpCmain_Bonds");
+        table_field.put("prpCmainCredits","prpCmain_Credits");
+        table_field.put("prpCextendInfos","prpCextend_Infos");
+        table_field.put("prpCmainAirLines","table_field");
+        table_field.put("prpCcommissions","prpC_commissions");
+        table_field.put("sdsadasd","sdsad_asd");
+        table_field.put("prpCmainAgris","prpC_mainAgris");
+        table_field.put("prpCprojects","prpC_projects");
+        table_field.put("Subs","Su_bs");
+        table_field.put("Plans","Pl_ans");
+        table_field.put("Liabs","Lia_bs");
+        table_field.put("Coupon","Cou_pon");
+
+
 
         boolean flag = false;
         for (Entry<String, Object> entry : entrySet) {
@@ -330,10 +317,12 @@ public class CompareUtil {
                     if (entry.getValue() != null
                             && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONArray")) {
                         dbv.add(table_field.get(key));
+                        rdbv.put(table_field.get(key),key);
                     }
                     else if (entry.getValue() != null
                             && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                         dbv.add(table_field.get(key));
+                        rdbv.put(table_field.get(key),key);
                     }
                     break;
                 }
@@ -345,7 +334,7 @@ public class CompareUtil {
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONArray")) {
                     try {
                         String value1 = (String) entry.getValue();
-                        getFiledName(value1,dbv);
+                        getFiledName(value1,dbv,rdbv);
                     } catch (Exception e) {
                         System.out.println("JSONArray  转化失败");
                     }
@@ -353,7 +342,7 @@ public class CompareUtil {
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                     try {
                         String value1 = (String) entry.getValue();
-                        getFiledName(value1,dbv);
+                        getFiledName(value1,dbv,rdbv);
                     } catch (Exception e) {
                         System.out.println("转化失败");
                     }
@@ -361,8 +350,42 @@ public class CompareUtil {
                 }
             }
         }
-
     }
+
+    /**
+     * 判断两个值是否一致
+     *
+     * @param resp         第一个值（一般是接口返回的值）
+     * @param db           第二个值（一般是数据库存的值）
+     * @param errorMessage 存放错误信息
+     * @param fieldName    字段名
+     */
+    private static void valueCompare(Object resp, Object db, StringBuffer errorMessage, String fieldName) {
+        System.out.println(fieldName + "开始进行校验");
+        //null的处理，如果是null返回空字符串，如果不是null转换为String类型
+        String respStr = isNull(resp).trim();
+        String dbStr = isNull(db).trim();
+        //时间类型的处理
+        respStr = isDate(respStr);
+        dbStr = isDate(dbStr);
+        System.out.println("接口返回======"+respStr);
+        System.out.println("数据库======"+dbStr);
+        // 数字类型的值的比较
+        if (isNumber(respStr) && isNumber(dbStr)) {
+            if ((new BigDecimal(respStr)).compareTo(new BigDecimal(dbStr)) != 0) {
+                errorMessage.append(fieldName + "的值数据库和接口返回的不一致 \n");
+                errorMessage.append("接口===" + respStr + "\n");
+                errorMessage.append("数据库===" + dbStr + "\n");
+            }
+        } else {
+            if (!respStr.equals(dbStr)) {
+                errorMessage.append(fieldName + "的值数据库和接口返回的不一致 \n");
+                errorMessage.append("接口===" + respStr + "\n");
+                errorMessage.append("数据库===" + dbStr + "\n");
+            }
+        }
+    }
+
 
     public static void main(String[] args) {
   /*     String value = "{\"data\":{\"archivesNo\":\"RC00300000000202000050\",\"checkUpCode\":\"A000019300\",\"checkUpCodeCName\":\"\",\"checkUpFlag\":\"0\",\"comCode\":\"00000000\",\"companyName\":\"ggg\",\"exploreAddress\":\"北京市海淀区北三环西路辅路99号西海国际中心\",\"exploreComcode\":\"00000000\",\"exploreComcodeCName\":\"\",\"exploreDate\":\"2019-08-21\",\"explorer\":\"\",\"explorerCName\":\"\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"message\":\"根据照片档案号查询照片档案信息成功\",\"mobileFlag\":\"1\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"riskReportSaleImaTypeList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"1.1\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"1.1.1\",\"imageType\":\"1.1\"},\"imageUrl\":\"/RC00300000000202000050/1.1/1.1.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"EDC1D4B3-FCD7-BB54-468D-477A59DF3A13\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"大门照\",\"url\":\"\"},{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"3.2\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"3.2.1\",\"imageType\":\"3.2\"},\"imageUrl\":\"/RC00300000000202000050/3.2/3.2.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"54DC3F4E-8530-9139-DAC2-198E91514842\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"材料燃烧性质\",\"url\":\"\"},{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"4.2.5\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"4.2.5.1\",\"imageType\":\"4.2.5\"},\"imageUrl\":\"/RC00300000000202000050/4.2.5/4.2.5.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"F80B6955-4330-37E4-DE66-EC21B3BEE465\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"消防设施维护检查\",\"url\":\"\"},{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"5.1.4\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"5.1.4.1\",\"imageType\":\"5.1.4\"},\"imageUrl\":\"/RC00300000000202000050/5.1.4/5.1.4.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"F84D64B4-8AD0-2555-A6F0-EBEF7F6166C7\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"方位地势照\",\"url\":\"\"}],\"status\":0},\"status\":0,\"statusText\":\"Success\"}";
@@ -1276,9 +1299,11 @@ public class CompareUtil {
                 "        ]\n" +
                 "    }\n" +
                 "}";
-        ArrayList arrayList = new ArrayList();
-        getFiledName(str,arrayList);
-        System.out.println(arrayList);
+        ArrayList<String> strings = new ArrayList<String>();
+        HashMap<Object, String> stringObjectHashMap = new HashMap<Object, String>();
+        getFiledName(str,strings,stringObjectHashMap);
+        System.out.println(strings);
+        System.out.println(stringObjectHashMap);
 
     }
 
