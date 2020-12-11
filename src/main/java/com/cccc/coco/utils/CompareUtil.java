@@ -1,21 +1,23 @@
 package com.cccc.coco.utils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class CompareUtil {
+public class CompareUtil
+{
 
     /**
      * 从JSON数据里取出对应的节点数据
-     *
      * @param fieldName 节点名
      * @param JS        JSON数据
      * @param resultJA  返回或者请求报文的节点数据（作为listCompare的方法参数）
      */
-    public static void getJAByField(String fieldName, JSONObject JS, JSONArray resultJA) {
+    public static void getJAByField(String fieldName, JSONObject JS, JSONArray resultJA)
+    {
         //JsonObject实际上是一个map，可以通用map的方法
         Set<Entry<String, Object>> entrySet = JS.entrySet();
         boolean flag = false;
@@ -32,7 +34,8 @@ public class CompareUtil {
                     for (int i = 0; i < temJA.size(); i++) {
                         resultJA.add(temJA.getJSONObject(i));
                     }
-                } else if (entry.getValue() != null
+                }
+                else if (entry.getValue() != null
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                     resultJA.add((JSONObject) entry.getValue());
                 }
@@ -40,8 +43,8 @@ public class CompareUtil {
             }
         }
         /*如果响应或者返回报文的节点名与需要比较的节点名称不一致
-        * 1.如果报文的节点值不为空，而且类型为JsonArray，循环得到整个数组值，递归的思想调用自己
-        * 2.或者报文的节点值不为空，而且类型为JsonObject，递归的思想调用自己*/
+         * 1.如果报文的节点值不为空，而且类型为JsonArray，循环得到整个数组值，递归的思想调用自己
+         * 2.或者报文的节点值不为空，而且类型为JsonObject，递归的思想调用自己*/
         if (!flag) {
             for (Entry<String, Object> entry : entrySet) {
                 if (entry.getValue() != null
@@ -51,14 +54,17 @@ public class CompareUtil {
                         for (int i = 0; i < temJA.size(); i++) {
                             getJAByField(fieldName, temJA.getJSONObject(i), resultJA);
                         }
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         System.out.println("JSONArray中的数据转化JsonObject失败");
                     }
-                } else if (entry.getValue() != null
+                }
+                else if (entry.getValue() != null
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                     try {
                         getJAByField(fieldName, (JSONObject) entry.getValue(), resultJA);
-                    } catch (Exception e) {
+                    }
+                    catch (Exception e) {
                         System.out.println("JSONObject转化失败");
                     }
 
@@ -78,7 +84,8 @@ public class CompareUtil {
      * @param ignoreList   存放不需要校验的字段
      */
     public static void listCompare(JSONArray resps, JSONArray db, StringBuffer errorMessage, String fieldName,
-                                       ArrayList<String> ignoreList) {
+                                   ArrayList<String> ignoreList)
+    {
         //如果没有不需要比较的字段
         if (ignoreList == null) {
             ignoreList = new ArrayList<String>();
@@ -91,7 +98,8 @@ public class CompareUtil {
         if (resps != null && resps.size() > 0) {
             try {
                 temRespIdJs = resps.getJSONObject(0).getJSONObject("id");
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 // TODO: handle exception
             }
 
@@ -113,7 +121,8 @@ public class CompareUtil {
                 for (int i = 0; i < resps.size(); i++) {
                     JSONObjectCompare(resps.getJSONObject(i), db.getJSONObject(i), errorMessage, ignoreList);
                 }
-            } else {
+            }
+            else {
                 for (int i = 0; i < resps.size(); i++) {
                     JSONObject resp_tem = resps.getJSONObject(i);
                     for (int j = 0; j < db.size(); j++) {
@@ -124,23 +133,26 @@ public class CompareUtil {
                     }
                 }
             }
-        } else {
+        }
+        else {
             errorMessage.append(fieldName + "接口返回的数据和数据库的数据数量不同");
         }
     }
 
-    private static boolean isIdentical(JSONObject resp_tem, JSONObject db_tem, ArrayList<String> ids) {
+    private static boolean isIdentical(JSONObject resp_tem, JSONObject db_tem, ArrayList<String> ids)
+    {
         boolean flag = true;
         String resp_value = "";
         String db_value = "";
         for (String key : ids) {
-            if(resp_tem.get(key) == null) {
+            if (resp_tem.get(key) == null) {
                 resp_value = resp_tem.getJSONObject("id").getString(key);
-            }else {
+            }
+            else {
                 resp_value = resp_tem.getString(key);
             }
             db_value = db_tem.getString(key.toLowerCase());
-            if(!resp_value.equals(db_value)) {
+            if (!resp_value.equals(db_value)) {
                 flag = false;
             }
         }
@@ -149,13 +161,16 @@ public class CompareUtil {
 
     /**
      * NUll值的处理
+     *
      * @param value1
      * @return
      */
-    private static String isNull(Object value1) {
+    private static String isNull(Object value1)
+    {
         if (value1 == null) {
             return "";
-        } else {
+        }
+        else {
             return value1.toString();
         }
     }
@@ -163,10 +178,12 @@ public class CompareUtil {
     /**
      * 判断一个值是不是可以数字格式 可以判断正整型，正浮点型
      */
-    private static boolean isNumber(String str) {
+    private static boolean isNumber(String str)
+    {
         if (str.matches("[0-9]+[.]?[0-9]*")) {
             return true;
-        } else {
+        }
+        else {
             return false;
         }
     }
@@ -180,8 +197,9 @@ public class CompareUtil {
      * @param ignoreList   存放不需要校验的字段
      */
     public static void JSONObjectCompare(JSONObject resp, JSONObject db, StringBuffer errorMessage,
-                                         ArrayList<String> ignoreList) {
-        if(ignoreList == null) {
+                                         ArrayList<String> ignoreList)
+    {
+        if (ignoreList == null) {
             ignoreList = new ArrayList<String>();
         }
         Set<Entry<String, Object>> entrySet = resp.entrySet();
@@ -192,17 +210,20 @@ public class CompareUtil {
             if (entry.getValue() != null
                     && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONArray")) {
                 continue;
-            } else if (entry.getValue() != null
+            }
+            else if (entry.getValue() != null
                     && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")
                     && !entry.getKey().equals("id")) {
                 continue;
-            } else if (entry.getKey().equals("id")) {
+            }
+            else if (entry.getKey().equals("id")) {
                 JSONObject temId = null;
                 try {
                     temId = resp.getJSONObject("id");
-                } catch (Exception e) {
                 }
-                if(temId==null) {
+                catch (Exception e) {
+                }
+                if (temId == null) {
                     continue;
                 }
                 Set<Entry<String, Object>> entrySet_id = temId.entrySet();
@@ -210,7 +231,8 @@ public class CompareUtil {
                     valueCompare(temId.get(ide.getKey()), db.get(ide.getKey().toLowerCase()), errorMessage,
                             ide.getKey());
                 }
-            } else {
+            }
+            else {
                 valueCompare(resp.get(entry.getKey()), db.get(entry.getKey().toLowerCase()), errorMessage,
                         entry.getKey());
             }
@@ -219,22 +241,24 @@ public class CompareUtil {
 
     /**
      * 判断一个字段是不是时间类型,如果时分秒没有值，直接去除时分秒，如果时分秒有值，保留时分秒。
-     * @param  value
+     *
+     * @param value
      * @return String
-     * */
-    private static String isDate(String value) {
+     */
+    private static String isDate(String value)
+    {
         String result = "";
-        if(value.contains(".")) {
-            result = value.substring(0,value.indexOf("."));
+        if (value.contains(".")) {
+            result = value.substring(0, value.indexOf("."));
         }
-        if(value.contains("T")) {
+        if (value.contains("T")) {
             result = value.replace("T", " ");
         }
-        if(value.contains("00:00:00")) {
-            result = value.substring(0,10);
+        if (value.contains("00:00:00")) {
+            result = value.substring(0, 10);
         }
-        if(value.length()==13 && value.charAt(0)!='0'&& isNumber(value)){
-            Long l=Long.parseLong(value);
+        if (value.length() == 13 && value.charAt(0) != '0' && isNumber(value) && value.charAt(1) != '.') {
+            Long l = Long.parseLong(value);
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             result = simpleDateFormat.format(l);
         }
@@ -248,21 +272,24 @@ public class CompareUtil {
         if (result.matches(pattern) || result.matches(pattern1)) {
             flag = true;
         }
-        if(flag) {
+        if (flag) {
             return result;
-        }else {
+        }
+        else {
             return value;
         }
     }
 
     /**
      * 去掉数据库字段的下划线（核保微服务）
+     *
      * @param JA
      * @return
      */
-    public static JSONArray dealDbData(JSONArray JA) {
+    public static JSONArray dealDbData(JSONArray JA)
+    {
         JSONArray resultJA = new JSONArray();
-        if(JA != null) {
+        if (JA != null) {
             for (int i = 0; i < JA.size(); i++) {
                 JSONObject dbJS = JA.getJSONObject(i);
                 JSONObject temJS = dealData(dbJS);
@@ -272,7 +299,8 @@ public class CompareUtil {
         return resultJA;
     }
 
-    public static JSONObject dealData(JSONObject JS) {
+    public static JSONObject dealData(JSONObject JS)
+    {
         JSONObject temJS = new JSONObject();
         Set<Entry<String, Object>> entrySet = JS.entrySet();
         for (Entry<String, Object> entry : entrySet) {
@@ -281,34 +309,20 @@ public class CompareUtil {
         return temJS;
     }
 
-    public static void getFiledName(String value, ArrayList<String> dbv, Map<Object, String> rdbv)
+    /**
+     *根据返回报文的节点名进行数据库表的组装，以及节点名与表名的映射关系组装
+     * @param value
+     * @param dbv
+     * @param rdbv
+     * @param table_field
+     */
+    public static void getFiledName(String value, ArrayList<String> dbv, Map<Object, String> rdbv, Map<String, String> table_field)
     {
         JSONObject jsonObject = JSONObject.parseObject(value).getJSONObject("data");
         JSONArray objects = new JSONArray();
-        jsonObject.put("data",objects);
+        jsonObject.put("data", objects);
 
         Set<Entry<String, Object>> entrySet = jsonObject.entrySet();
-
-        HashMap<String,String> table_field = new HashMap<String,String>();
-        table_field.put("data","da_ta");
-        table_field.put("prpPmainAccs","prpcmain_acc");
-        table_field.put("Addresses","prpcaddress");
-        table_field.put("prpCmainExts","prpCmain_Exts");
-        table_field.put("prpCmainBonds","prpCmain_Bonds");
-        table_field.put("prpCmainCredits","prpCmain_Credits");
-        table_field.put("prpCextendInfos","prpCextend_Infos");
-        table_field.put("prpCmainAirLines","table_field");
-        table_field.put("prpCcommissions","prpC_commissions");
-        table_field.put("sdsadasd","sdsad_asd");
-        table_field.put("prpCmainAgris","prpC_mainAgris");
-        table_field.put("prpCprojects","prpC_projects");
-        table_field.put("Subs","Su_bs");
-        table_field.put("Plans","Pl_ans");
-        table_field.put("Liabs","Lia_bs");
-        table_field.put("Coupon","Cou_pon");
-
-
-
         boolean flag = false;
         for (Entry<String, Object> entry : entrySet) {
             for (String key : table_field.keySet()) {
@@ -317,12 +331,12 @@ public class CompareUtil {
                     if (entry.getValue() != null
                             && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONArray")) {
                         dbv.add(table_field.get(key));
-                        rdbv.put(table_field.get(key),key);
+                        rdbv.put(table_field.get(key), key);
                     }
                     else if (entry.getValue() != null
                             && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                         dbv.add(table_field.get(key));
-                        rdbv.put(table_field.get(key),key);
+                        rdbv.put(table_field.get(key), key);
                     }
                     break;
                 }
@@ -334,16 +348,19 @@ public class CompareUtil {
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONArray")) {
                     try {
                         String value1 = (String) entry.getValue();
-                        getFiledName(value1,dbv,rdbv);
-                    } catch (Exception e) {
+                        getFiledName(value1, dbv, rdbv, table_field);
+                    }
+                    catch (Exception e) {
                         System.out.println("JSONArray  转化失败");
                     }
-                } else if (entry.getValue() != null
+                }
+                else if (entry.getValue() != null
                         && entry.getValue().getClass().toString().equals("class com.alibaba.fastjson.JSONObject")) {
                     try {
                         String value1 = (String) entry.getValue();
-                        getFiledName(value1,dbv,rdbv);
-                    } catch (Exception e) {
+                        getFiledName(value1, dbv, rdbv, table_field);
+                    }
+                    catch (Exception e) {
                         System.out.println("转化失败");
                     }
 
@@ -360,7 +377,8 @@ public class CompareUtil {
      * @param errorMessage 存放错误信息
      * @param fieldName    字段名
      */
-    private static void valueCompare(Object resp, Object db, StringBuffer errorMessage, String fieldName) {
+    private static void valueCompare(Object resp, Object db, StringBuffer errorMessage, String fieldName)
+    {
         System.out.println(fieldName + "开始进行校验");
         //null的处理，如果是null返回空字符串，如果不是null转换为String类型
         String respStr = isNull(resp).trim();
@@ -368,8 +386,8 @@ public class CompareUtil {
         //时间类型的处理
         respStr = isDate(respStr);
         dbStr = isDate(dbStr);
-        System.out.println("接口返回======"+respStr);
-        System.out.println("数据库======"+dbStr);
+        System.out.println("接口返回======" + respStr);
+        System.out.println("数据库======" + dbStr);
         // 数字类型的值的比较
         if (isNumber(respStr) && isNumber(dbStr)) {
             if ((new BigDecimal(respStr)).compareTo(new BigDecimal(dbStr)) != 0) {
@@ -377,7 +395,8 @@ public class CompareUtil {
                 errorMessage.append("接口===" + respStr + "\n");
                 errorMessage.append("数据库===" + dbStr + "\n");
             }
-        } else {
+        }
+        else {
             if (!respStr.equals(dbStr)) {
                 errorMessage.append(fieldName + "的值数据库和接口返回的不一致 \n");
                 errorMessage.append("接口===" + respStr + "\n");
@@ -386,927 +405,34 @@ public class CompareUtil {
         }
     }
 
-
-    public static void main(String[] args) {
-  /*     String value = "{\"data\":{\"archivesNo\":\"RC00300000000202000050\",\"checkUpCode\":\"A000019300\",\"checkUpCodeCName\":\"\",\"checkUpFlag\":\"0\",\"comCode\":\"00000000\",\"companyName\":\"ggg\",\"exploreAddress\":\"北京市海淀区北三环西路辅路99号西海国际中心\",\"exploreComcode\":\"00000000\",\"exploreComcodeCName\":\"\",\"exploreDate\":\"2019-08-21\",\"explorer\":\"\",\"explorerCName\":\"\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"message\":\"根据照片档案号查询照片档案信息成功\",\"mobileFlag\":\"1\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"riskReportSaleImaTypeList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"1.1\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"1.1.1\",\"imageType\":\"1.1\"},\"imageUrl\":\"/RC00300000000202000050/1.1/1.1.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"EDC1D4B3-FCD7-BB54-468D-477A59DF3A13\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"大门照\",\"url\":\"\"},{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"3.2\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"3.2.1\",\"imageType\":\"3.2\"},\"imageUrl\":\"/RC00300000000202000050/3.2/3.2.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"54DC3F4E-8530-9139-DAC2-198E91514842\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"材料燃烧性质\",\"url\":\"\"},{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"4.2.5\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"4.2.5.1\",\"imageType\":\"4.2.5\"},\"imageUrl\":\"/RC00300000000202000050/4.2.5/4.2.5.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"F80B6955-4330-37E4-DE66-EC21B3BEE465\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"消防设施维护检查\",\"url\":\"\"},{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageType\":\"5.1.4\"},\"imageRepulseSum\":0,\"imageSum\":1,\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"remark\":\"\",\"riskReportSaleImageList\":[{\"id\":{\"archivesNo\":\"RC00300000000202000050\",\"imageName\":\"5.1.4.1\",\"imageType\":\"5.1.4\"},\"imageUrl\":\"/RC00300000000202000050/5.1.4/5.1.4.1.jpg\",\"insertTimeForHis\":\"2020-07-27 17:20:49\",\"modifyFlag\":\"\",\"operateTimeForHis\":\"2020-07-27 17:20:49\",\"pageId\":\"F84D64B4-8AD0-2555-A6F0-EBEF7F6166C7\",\"remark\":\"\",\"repulseReason\":\"\",\"riskReportSaleCorrectionList\":[],\"riskSuggest\":\"\",\"riskType\":\"\",\"stateFlag\":\"0\",\"thumUrl\":\"\",\"title\":\"\",\"urlAfter\":\"\",\"urlName\":\"\"}],\"typeCName\":\"方位地势照\",\"url\":\"\"}],\"status\":0},\"status\":0,\"statusText\":\"Success\"}";
-       String dbvalue = "[{\"operatetimeforhis\":1595841649000,\"imagetype\":\"3.2\",\"imagesum\":1,\"inserttimeforhis\":1595841649000,\"archivesno\":\"RC00300000000202000050\",\"imagerepulsesum\":0,\"remark\":\"\",\"typecname\":\"材料燃烧性质\"},{\"operatetimeforhis\":1595841649000,\"imagetype\":\"1.1\",\"imagesum\":1,\"inserttimeforhis\":1595841649000,\"archivesno\":\"RC00300000000202000050\",\"imagerepulsesum\":0,\"remark\":\"\",\"typecname\":\"大门照\"},{\"operatetimeforhis\":1595841649000,\"imagetype\":\"4.2.5\",\"imagesum\":1,\"inserttimeforhis\":1595841649000,\"archivesno\":\"RC00300000000202000050\",\"imagerepulsesum\":0,\"remark\":\"\",\"typecname\":\"消防设施维护检查\"},{\"operatetimeforhis\":1595841649000,\"imagetype\":\"5.1.4\",\"imagesum\":1,\"inserttimeforhis\":1595841649000,\"archivesno\":\"RC00300000000202000050\",\"imagerepulsesum\":0,\"remark\":\"\",\"typecname\":\"方位地势照\"}] ";
-        JSONArray objects1 = JSONArray.parseArray(dbvalue);
-        JSONObject jsonObject = JSONObject.parseObject(value);
-        JSONArray objects = new JSONArray();
-        StringBuffer errorMessage = new StringBuffer();
-        getJAByField("riskReportSaleImaTypeList",jsonObject,objects);
-        System.out.println(objects);
-        listCompare(objects,objects1,errorMessage,"riskReportSaleImaTypeList",null);
-        System.out.println(errorMessage);*/
-
-        String str ="{\n" +
-                "    \"status\":0,\n" +
-                "    \"statusText\":\"Success\",\n" +
-                "    \"data\":{\n" +
-                "        \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "        \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "        \"classCode\":\"02\",\n" +
-                "        \"riskCode\":\"JBU\",\n" +
-                "        \"riskName\":null,\n" +
-                "        \"projectCode\":\"\",\n" +
-                "        \"contractNo\":\"\",\n" +
-                "        \"policySort\":\"1\",\n" +
-                "        \"businessNature\":\"0\",\n" +
-                "        \"language\":\"C\",\n" +
-                "        \"policyType\":\"01\",\n" +
-                "        \"agriFlag\":\"0\",\n" +
-                "        \"operateDate\":\"2020-01-01 13:11:17\",\n" +
-                "        \"startDate\":\"2020-01-08 00:00:00\",\n" +
-                "        \"endDate\":\"2021-01-07 00:00:00\",\n" +
-                "        \"startHour\":null,\n" +
-                "        \"endHour\":null,\n" +
-                "        \"disRate\":null,\n" +
-                "        \"sumValue\":0,\n" +
-                "        \"sumAmount\":200,\n" +
-                "        \"sumDiscount\":null,\n" +
-                "        \"sumPremiumB4Discount\":null,\n" +
-                "        \"couponAmount\":null,\n" +
-                "        \"couponPremium\":null,\n" +
-                "        \"minPremium\":null,\n" +
-                "        \"sumPremium\":20,\n" +
-                "        \"sumSubPrem\":0,\n" +
-                "        \"sumQuantity\":1,\n" +
-                "        \"policyCount\":1,\n" +
-                "        \"judicalScope\":\"01\",\n" +
-                "        \"argueSolution\":\"1\",\n" +
-                "        \"arbitBoardName\":\"\",\n" +
-                "        \"payTimes\":1,\n" +
-                "        \"makeCom\":\"32048200\",\n" +
-                "        \"operateSite\":null,\n" +
-                "        \"comCode\":\"32048200\",\n" +
-                "        \"handlerCode\":\"16207959\",\n" +
-                "        \"handler1Code\":\"16207986\",\n" +
-                "        \"checkFlag\":\"4\",\n" +
-                "        \"checkUpCode\":null,\n" +
-                "        \"checkOpinion\":null,\n" +
-                "        \"underWriteCode\":\"UnderWrite\",\n" +
-                "        \"underWriteName\":\"自动核保\",\n" +
-                "        \"operatorCode\":\"83298873\",\n" +
-                "        \"inputTime\":\"2020-01-11 17:11:04\",\n" +
-                "        \"underWriteEndDate\":\"2020-01-15\",\n" +
-                "        \"statisticsYM\":\"202001\",\n" +
-                "        \"agentCode\":\"000002000001\",\n" +
-                "        \"coinsFlag\":\"00\",\n" +
-                "        \"reinsFlag\":\"0000000000\",\n" +
-                "        \"allinsFlag\":\"0\",\n" +
-                "        \"underWriteFlag\":\"3\",\n" +
-                "        \"jfeeFlag\":\"0\",\n" +
-                "        \"inputFlag\":\"0\",\n" +
-                "        \"undwrtSubmitDate\":\"2020-01-15\",\n" +
-                "        \"othFlag\":\"000000YY00\",\n" +
-                "        \"remark\":null,\n" +
-                "        \"checkCode\":null,\n" +
-                "        \"flag\":null,\n" +
-                "        \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "        \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "        \"payMode\":\"9\",\n" +
-                "        \"payCode\":null,\n" +
-                "        \"crossFlag\":\"0\",\n" +
-                "        \"batchGroupNo\":null,\n" +
-                "        \"sumTaxFee\":1.13,\n" +
-                "        \"sumNetPremium\":18.87,\n" +
-                "        \"prePremium\":null,\n" +
-                "        \"pkey\":\"TJBU202032046000005683\",\n" +
-                "        \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "        \"currency\":\"CNY\",\n" +
-                "        \"dmFlag\":null,\n" +
-                "        \"handler1Code_uni\":\"1232061117\",\n" +
-                "        \"handlerCode_uni\":\"\",\n" +
-                "        \"isAutoePolicy\":null,\n" +
-                "        \"salesCode\":null,\n" +
-                "        \"personOri\":\"4\",\n" +
-                "        \"productCode\":null,\n" +
-                "        \"productName\":null,\n" +
-                "        \"approverCode\":null,\n" +
-                "        \"pureRate\":null,\n" +
-                "        \"discount\":null,\n" +
-                "        \"insuredCount\":null,\n" +
-                "        \"auditNo\":null,\n" +
-                "        \"auditNoToE\":null,\n" +
-                "        \"crossSellType\":null,\n" +
-                "        \"inputSumPremium\":null,\n" +
-                "        \"dutySumNetPremium\":null,\n" +
-                "        \"freeSumNetPremium\":null,\n" +
-                "        \"orderNo\":null,\n" +
-                "        \"orderFlag\":null,\n" +
-                "        \"policyPageVo\":{\n" +
-                "            \"tableMap\":{\n" +
-                "                \"PrpCcoins\":0,\n" +
-                "                \"PrpCname\":0,\n" +
-                "                \"PrpCitem\":0,\n" +
-                "                \"PrpCaddress\":0,\n" +
-                "                \"PrpCinsured\":2,\n" +
-                "                \"PrpCration\":1\n" +
-                "            },\n" +
-                "            \"pageGroupVos\":[\n" +
-                "                {\n" +
-                "                    \"groupNo\":1,\n" +
-                "                    \"groupMap\":{\n" +
-                "                        \"PrpCitemKind\":1\n" +
-                "                    },\n" +
-                "                    \"totalCountsNew\":null,\n" +
-                "                    \"totalCountsOld\":null\n" +
-                "                }\n" +
-                "            ],\n" +
-                "            \"pageItemVos\":null\n" +
-                "        },\n" +
-                "        \"prpCmainAccs\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCmainExts\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCmainBonds\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCmainCredits\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCextendInfos\":[\n" +
-                "            {\n" +
-                "                \"id\":{\n" +
-                "                    \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                    \"extendType\":\"04\",\n" +
-                "                    \"serialNo\":1,\n" +
-                "                    \"columnCode\":\"5173用户游戏帐号\"\n" +
-                "                },\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\":\"JBU\",\n" +
-                "                \"columnName\":\"王者荣耀\",\n" +
-                "                \"content\":\"1\",\n" +
-                "                \"displayOrder\":0,\n" +
-                "                \"flag\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\"\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"prpCmainAirLines\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCcommissions\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCcoeffs\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCmainAgris\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCprojects\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCprofitFactors\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCitemCreditOths\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCclauseplans\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCpayeeAccounts\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"prpCinsuredCreditInvests\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"actualProduct\":null,\n" +
-                "        \"prpCmainExtraVo\":null,\n" +
-                "        \"Employees\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Props\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"AgentDetails\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"shipDrivers\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Drivers\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Addresses\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"InsuredIdvLists\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Crosses\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Subs\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Agents\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Constructs\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Itemkinds\":[\n" +
-                "            {\n" +
-                "                \"id\":{\n" +
-                "                    \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                    \"itemKindNo\":1\n" +
-                "                },\n" +
-                "                \"riskCode\":\"JBU\",\n" +
-                "                \"familyNo\":null,\n" +
-                "                \"familyName\":null,\n" +
-                "                \"projectCode\":null,\n" +
-                "                \"clauseCode\":\"020223\",\n" +
-                "                \"clauseName\":\"网络游戏虚拟财产损失保险条款\",\n" +
-                "                \"kindCode\":\"020164\",\n" +
-                "                \"kindName\":\"网络游戏虚拟财产损失\",\n" +
-                "                \"itemNo\":1,\n" +
-                "                \"itemCode\":\"002131\",\n" +
-                "                \"itemDetailName\":\"游戏账号\",\n" +
-                "                \"groupNo\":1,\n" +
-                "                \"modeCode\":\"JBUYY00001\",\n" +
-                "                \"modeName\":\"虚拟财产保险060天至060天\",\n" +
-                "                \"startDate\":\"2020-01-08\",\n" +
-                "                \"startHour\":null,\n" +
-                "                \"endDate\":\"2021-01-07\",\n" +
-                "                \"endHour\":null,\n" +
-                "                \"model\":null,\n" +
-                "                \"buyDate\":null,\n" +
-                "                \"addressNo\":null,\n" +
-                "                \"calculateFlag\":\"1\",\n" +
-                "                \"currency\":\"CNY\",\n" +
-                "                \"unitAmount\":200,\n" +
-                "                \"quantity\":1,\n" +
-                "                \"unit\":\"1\",\n" +
-                "                \"value\":null,\n" +
-                "                \"amount\":200,\n" +
-                "                \"ratePeriod\":null,\n" +
-                "                \"rate\":10,\n" +
-                "                \"shortRateFlag\":\"3\",\n" +
-                "                \"shortRate\":100,\n" +
-                "                \"prePremium\":null,\n" +
-                "                \"calPremium\":20,\n" +
-                "                \"basePremium\":null,\n" +
-                "                \"benchMarkPremium\":null,\n" +
-                "                \"discount\":null,\n" +
-                "                \"adjustRate\":null,\n" +
-                "                \"unitPremium\":20,\n" +
-                "                \"premiumB4Discount\":null,\n" +
-                "                \"premium\":20,\n" +
-                "                \"deductibleRate\":null,\n" +
-                "                \"deductible\":null,\n" +
-                "                \"taxFee\":1.13,\n" +
-                "                \"taxFee_ys\":null,\n" +
-                "                \"taxFee_gb\":0,\n" +
-                "                \"taxFee_lb\":0,\n" +
-                "                \"netPremium\":18.87,\n" +
-                "                \"allTaxFee\":1.13,\n" +
-                "                \"allNetPremium\":18.87,\n" +
-                "                \"taxRate\":6,\n" +
-                "                \"taxFlag\":\"2\",\n" +
-                "                \"flag\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"prpCprofits\":[\n" +
-                "\n" +
-                "                ],\n" +
-                "                \"iscalculateFlag\":null,\n" +
-                "                \"userCount\":null,\n" +
-                "                \"pack\":null,\n" +
-                "                \"firstLevel\":null,\n" +
-                "                \"methodType\":null,\n" +
-                "                \"insuredQuantity\":null,\n" +
-                "                \"clauseFlag\":null,\n" +
-                "                \"itemKindFactorFlag\":null,\n" +
-                "                \"prpCitemKindTaxFees\":[\n" +
-                "\n" +
-                "                ],\n" +
-                "                \"ItemKindDetails\":[\n" +
-                "\n" +
-                "                ]\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Limits\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Loans\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Engages\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Insureds\":[\n" +
-                "            {\n" +
-                "                \"id\":{\n" +
-                "                    \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                    \"serialNo\":1\n" +
-                "                },\n" +
-                "                \"serialNo\":null,\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\":\"JBU\",\n" +
-                "                \"language\":\"C\",\n" +
-                "                \"insuredType\":\"1\",\n" +
-                "                \"insuredCode\":\"8888888888888888\",\n" +
-                "                \"insuredName\":\"测试\",\n" +
-                "                \"insuredEName\":null,\n" +
-                "                \"aliasName\":null,\n" +
-                "                \"insuredAddress\":null,\n" +
-                "                \"insuredNature\":null,\n" +
-                "                \"insuredFlag\":\"100000000000000000000000000000\",\n" +
-                "                \"unitType\":null,\n" +
-                "                \"appendPrintName\":null,\n" +
-                "                \"insuredIdentity\":\"99\",\n" +
-                "                \"relateSerialNo\":null,\n" +
-                "                \"identifyType\":\"01\",\n" +
-                "                \"identifyNumber\":\"110101198001010010\",\n" +
-                "                \"unifiedSocialCreditCode\":null,\n" +
-                "                \"creditLevel\":null,\n" +
-                "                \"possessNature\":null,\n" +
-                "                \"businessSource\":null,\n" +
-                "                \"businessSort\":null,\n" +
-                "                \"occupationCode\":null,\n" +
-                "                \"educationCode\":null,\n" +
-                "                \"bank\":null,\n" +
-                "                \"accountName\":null,\n" +
-                "                \"account\":null,\n" +
-                "                \"linkerName\":null,\n" +
-                "                \"postAddress\":\"\",\n" +
-                "                \"postCode\":null,\n" +
-                "                \"phoneNumber\":null,\n" +
-                "                \"faxNumber\":null,\n" +
-                "                \"mobile\":\"18300000000\",\n" +
-                "                \"netAddress\":null,\n" +
-                "                \"email\":\"\",\n" +
-                "                \"dateValid\":null,\n" +
-                "                \"startDate\":\"2020-01-08 00:00:00\",\n" +
-                "                \"endDate\":\"2021-01-07 00:00:00\",\n" +
-                "                \"benefitFlag\":null,\n" +
-                "                \"benefitRate\":null,\n" +
-                "                \"drivingLicenseNo\":null,\n" +
-                "                \"changelessFlag\":null,\n" +
-                "                \"sex\":\"1\",\n" +
-                "                \"age\":40,\n" +
-                "                \"marriage\":null,\n" +
-                "                \"driverAddress\":null,\n" +
-                "                \"peccancy\":null,\n" +
-                "                \"acceptLicenseDate\":null,\n" +
-                "                \"receiveLicenseYear\":null,\n" +
-                "                \"drivingYears\":null,\n" +
-                "                \"causeTroubleTimes\":null,\n" +
-                "                \"awardLicenseOrgan\":null,\n" +
-                "                \"drivingCarType\":null,\n" +
-                "                \"countryCode\":null,\n" +
-                "                \"versionNo\":null,\n" +
-                "                \"auditstatus\":null,\n" +
-                "                \"flag\":null,\n" +
-                "                \"warningFlag\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"blackFlag\":null,\n" +
-                "                \"importSerialNo\":null,\n" +
-                "                \"groupCode\":null,\n" +
-                "                \"groupName\":null,\n" +
-                "                \"dweller\":null,\n" +
-                "                \"customerLevel\":null,\n" +
-                "                \"insuredPYName\":null,\n" +
-                "                \"groupNo\":null,\n" +
-                "                \"itemNo\":null,\n" +
-                "                \"importFlag\":null,\n" +
-                "                \"smsFlag\":null,\n" +
-                "                \"emailFlag\":null,\n" +
-                "                \"sendPhone\":null,\n" +
-                "                \"sendEmail\":null,\n" +
-                "                \"subPolicyNo\":null,\n" +
-                "                \"socialSecurityNo\":null,\n" +
-                "                \"electronicflag\":null,\n" +
-                "                \"insuredSort\":null,\n" +
-                "                \"isHealthSurvey\":null,\n" +
-                "                \"InsuredNatures\":[\n" +
-                "                    {\n" +
-                "                        \"id\":{\n" +
-                "                            \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                            \"serialNo\":1\n" +
-                "                        },\n" +
-                "                        \"serialNo\":null,\n" +
-                "                        \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                        \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                        \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                        \"insuredFlag\":null,\n" +
-                "                        \"sex\":\"1\",\n" +
-                "                        \"age\":40,\n" +
-                "                        \"birthday\":\"1980-01-01\",\n" +
-                "                        \"health\":null,\n" +
-                "                        \"jobTitle\":null,\n" +
-                "                        \"localWorkYears\":null,\n" +
-                "                        \"education\":null,\n" +
-                "                        \"totalWorkYears\":null,\n" +
-                "                        \"unit\":null,\n" +
-                "                        \"unitPhoneNumber\":null,\n" +
-                "                        \"unitAddress\":null,\n" +
-                "                        \"unitPostCode\":null,\n" +
-                "                        \"unitType\":null,\n" +
-                "                        \"dutyLevel\":null,\n" +
-                "                        \"dutyType\":null,\n" +
-                "                        \"occupationCode\":null,\n" +
-                "                        \"houseProperty\":null,\n" +
-                "                        \"localPoliceStation\":null,\n" +
-                "                        \"roomAddress\":null,\n" +
-                "                        \"roomPostCode\":null,\n" +
-                "                        \"selfMonthIncome\":null,\n" +
-                "                        \"familyMonthIncome\":null,\n" +
-                "                        \"incomeSource\":null,\n" +
-                "                        \"roomPhone\":null,\n" +
-                "                        \"mobile\":null,\n" +
-                "                        \"familySumQuantity\":null,\n" +
-                "                        \"marriage\":null,\n" +
-                "                        \"spouseName\":null,\n" +
-                "                        \"spouseBornDate\":null,\n" +
-                "                        \"spouseId\":null,\n" +
-                "                        \"spouseMobile\":null,\n" +
-                "                        \"spouseUnit\":null,\n" +
-                "                        \"spouseJobTitle\":null,\n" +
-                "                        \"spouseUnitPhone\":null,\n" +
-                "                        \"flag\":null,\n" +
-                "                        \"carType\":null,\n" +
-                "                        \"disablePartAndLevel\":null,\n" +
-                "                        \"moreLoanHouseFlag\":null,\n" +
-                "                        \"nation\":null,\n" +
-                "                        \"poorFlag\":null,\n" +
-                "                        \"licenseNo\":null,\n" +
-                "                        \"getLicenseDate\":null,\n" +
-                "                        \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                        \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                        \"educationCode\":null,\n" +
-                "                        \"contactNo\":null,\n" +
-                "                        \"contactName\":null,\n" +
-                "                        \"certificationDate\":null,\n" +
-                "                        \"certificationNo\":null,\n" +
-                "                        \"addressCount\":null,\n" +
-                "                        \"importFlag\":null,\n" +
-                "                        \"socialFlag\":null,\n" +
-                "                        \"cardAmount\":null,\n" +
-                "                        \"usedAmount\":null,\n" +
-                "                        \"payAmount\":null,\n" +
-                "                        \"isPoverty\":null,\n" +
-                "                        \"importSerialNo\":null\n" +
-                "                    }\n" +
-                "                ],\n" +
-                "                \"InsuredArtifs\":[\n" +
-                "\n" +
-                "                ]\n" +
-                "            },\n" +
-                "            {\n" +
-                "                \"id\":{\n" +
-                "                    \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                    \"serialNo\":2\n" +
-                "                },\n" +
-                "                \"serialNo\":null,\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\":\"JBU\",\n" +
-                "                \"language\":\"C\",\n" +
-                "                \"insuredType\":\"1\",\n" +
-                "                \"insuredCode\":\"8888888888888888\",\n" +
-                "                \"insuredName\":\"3092285570\",\n" +
-                "                \"insuredEName\":\"\",\n" +
-                "                \"aliasName\":null,\n" +
-                "                \"insuredAddress\":null,\n" +
-                "                \"insuredNature\":null,\n" +
-                "                \"insuredFlag\":\"010000000000000000000000000000\",\n" +
-                "                \"unitType\":null,\n" +
-                "                \"appendPrintName\":null,\n" +
-                "                \"insuredIdentity\":\"0\",\n" +
-                "                \"relateSerialNo\":1,\n" +
-                "                \"identifyType\":\"99\",\n" +
-                "                \"identifyNumber\":\"123456\",\n" +
-                "                \"unifiedSocialCreditCode\":null,\n" +
-                "                \"creditLevel\":null,\n" +
-                "                \"possessNature\":null,\n" +
-                "                \"businessSource\":null,\n" +
-                "                \"businessSort\":null,\n" +
-                "                \"occupationCode\":null,\n" +
-                "                \"educationCode\":null,\n" +
-                "                \"bank\":null,\n" +
-                "                \"accountName\":null,\n" +
-                "                \"account\":null,\n" +
-                "                \"linkerName\":null,\n" +
-                "                \"postAddress\":\"\",\n" +
-                "                \"postCode\":null,\n" +
-                "                \"phoneNumber\":null,\n" +
-                "                \"faxNumber\":null,\n" +
-                "                \"mobile\":\"15130800000\",\n" +
-                "                \"netAddress\":null,\n" +
-                "                \"email\":\"\",\n" +
-                "                \"dateValid\":null,\n" +
-                "                \"startDate\":\"2020-01-08 00:00:00\",\n" +
-                "                \"endDate\":\"2021-01-07 00:00:00\",\n" +
-                "                \"benefitFlag\":null,\n" +
-                "                \"benefitRate\":null,\n" +
-                "                \"drivingLicenseNo\":null,\n" +
-                "                \"changelessFlag\":null,\n" +
-                "                \"sex\":\"9\",\n" +
-                "                \"age\":null,\n" +
-                "                \"marriage\":null,\n" +
-                "                \"driverAddress\":null,\n" +
-                "                \"peccancy\":null,\n" +
-                "                \"acceptLicenseDate\":null,\n" +
-                "                \"receiveLicenseYear\":null,\n" +
-                "                \"drivingYears\":null,\n" +
-                "                \"causeTroubleTimes\":null,\n" +
-                "                \"awardLicenseOrgan\":null,\n" +
-                "                \"drivingCarType\":null,\n" +
-                "                \"countryCode\":null,\n" +
-                "                \"versionNo\":null,\n" +
-                "                \"auditstatus\":null,\n" +
-                "                \"flag\":null,\n" +
-                "                \"warningFlag\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"blackFlag\":null,\n" +
-                "                \"importSerialNo\":null,\n" +
-                "                \"groupCode\":null,\n" +
-                "                \"groupName\":null,\n" +
-                "                \"dweller\":null,\n" +
-                "                \"customerLevel\":null,\n" +
-                "                \"insuredPYName\":null,\n" +
-                "                \"groupNo\":null,\n" +
-                "                \"itemNo\":null,\n" +
-                "                \"importFlag\":null,\n" +
-                "                \"smsFlag\":null,\n" +
-                "                \"emailFlag\":null,\n" +
-                "                \"sendPhone\":null,\n" +
-                "                \"sendEmail\":null,\n" +
-                "                \"subPolicyNo\":null,\n" +
-                "                \"socialSecurityNo\":null,\n" +
-                "                \"electronicflag\":null,\n" +
-                "                \"insuredSort\":null,\n" +
-                "                \"isHealthSurvey\":null,\n" +
-                "                \"InsuredNatures\":[\n" +
-                "                    {\n" +
-                "                        \"id\":{\n" +
-                "                            \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                            \"serialNo\":2\n" +
-                "                        },\n" +
-                "                        \"serialNo\":null,\n" +
-                "                        \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                        \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                        \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                        \"insuredFlag\":null,\n" +
-                "                        \"sex\":\"9\",\n" +
-                "                        \"age\":null,\n" +
-                "                        \"birthday\":null,\n" +
-                "                        \"health\":null,\n" +
-                "                        \"jobTitle\":null,\n" +
-                "                        \"localWorkYears\":null,\n" +
-                "                        \"education\":null,\n" +
-                "                        \"totalWorkYears\":null,\n" +
-                "                        \"unit\":null,\n" +
-                "                        \"unitPhoneNumber\":null,\n" +
-                "                        \"unitAddress\":null,\n" +
-                "                        \"unitPostCode\":null,\n" +
-                "                        \"unitType\":null,\n" +
-                "                        \"dutyLevel\":null,\n" +
-                "                        \"dutyType\":null,\n" +
-                "                        \"occupationCode\":null,\n" +
-                "                        \"houseProperty\":null,\n" +
-                "                        \"localPoliceStation\":null,\n" +
-                "                        \"roomAddress\":null,\n" +
-                "                        \"roomPostCode\":null,\n" +
-                "                        \"selfMonthIncome\":null,\n" +
-                "                        \"familyMonthIncome\":null,\n" +
-                "                        \"incomeSource\":null,\n" +
-                "                        \"roomPhone\":null,\n" +
-                "                        \"mobile\":null,\n" +
-                "                        \"familySumQuantity\":null,\n" +
-                "                        \"marriage\":null,\n" +
-                "                        \"spouseName\":null,\n" +
-                "                        \"spouseBornDate\":null,\n" +
-                "                        \"spouseId\":null,\n" +
-                "                        \"spouseMobile\":null,\n" +
-                "                        \"spouseUnit\":null,\n" +
-                "                        \"spouseJobTitle\":null,\n" +
-                "                        \"spouseUnitPhone\":null,\n" +
-                "                        \"flag\":null,\n" +
-                "                        \"carType\":null,\n" +
-                "                        \"disablePartAndLevel\":null,\n" +
-                "                        \"moreLoanHouseFlag\":null,\n" +
-                "                        \"nation\":null,\n" +
-                "                        \"poorFlag\":null,\n" +
-                "                        \"licenseNo\":null,\n" +
-                "                        \"getLicenseDate\":null,\n" +
-                "                        \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                        \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                        \"educationCode\":null,\n" +
-                "                        \"contactNo\":null,\n" +
-                "                        \"contactName\":null,\n" +
-                "                        \"certificationDate\":null,\n" +
-                "                        \"certificationNo\":null,\n" +
-                "                        \"addressCount\":null,\n" +
-                "                        \"importFlag\":null,\n" +
-                "                        \"socialFlag\":null,\n" +
-                "                        \"cardAmount\":null,\n" +
-                "                        \"usedAmount\":null,\n" +
-                "                        \"payAmount\":null,\n" +
-                "                        \"isPoverty\":null,\n" +
-                "                        \"importSerialNo\":null\n" +
-                "                    }\n" +
-                "                ],\n" +
-                "                \"InsuredArtifs\":[\n" +
-                "\n" +
-                "                ]\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Coins\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"SpecialFacs\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Batches\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Commissions\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Cargos\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Plans\":[\n" +
-                "            {\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"id\":{\n" +
-                "                    \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                    \"serialNo\":1\n" +
-                "                },\n" +
-                "                \"endorseNo\":null,\n" +
-                "                \"payNo\":1,\n" +
-                "                \"payReason\":\"R21\",\n" +
-                "                \"planDate\":\"2020-01-08\",\n" +
-                "                \"currency\":\"CNY\",\n" +
-                "                \"subsidyrate\":null,\n" +
-                "                \"planFee\":20,\n" +
-                "                \"delinquentFee\":20,\n" +
-                "                \"flag\":null,\n" +
-                "                \"payDate\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"payType\":null,\n" +
-                "                \"exchangeNo\":null,\n" +
-                "                \"paymentcomplete\":null,\n" +
-                "                \"taxFee\":1.13\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"CoinsDetails\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Liabs\":[\n" +
-                "            {\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"riskCode\":\"JBU\",\n" +
-                "                \"certificateNo\":null,\n" +
-                "                \"certificateDate\":null,\n" +
-                "                \"certificateDepart\":null,\n" +
-                "                \"practiceDate\":null,\n" +
-                "                \"businessDetail\":null,\n" +
-                "                \"businessSite\":\"爱保科技\",\n" +
-                "                \"insureAreaCode\":null,\n" +
-                "                \"insureArea\":null,\n" +
-                "                \"saleArea\":null,\n" +
-                "                \"officeType\":null,\n" +
-                "                \"bkWardStartDate\":null,\n" +
-                "                \"bkWardEndDate\":null,\n" +
-                "                \"staffCount\":null,\n" +
-                "                \"preTurnOver\":null,\n" +
-                "                \"nowTurnOver\":null,\n" +
-                "                \"electricPower\":null,\n" +
-                "                \"remark\":null,\n" +
-                "                \"claimBase\":\"1\",\n" +
-                "                \"flag\":null,\n" +
-                "                \"guaranteeArea\":null,\n" +
-                "                \"familyMembers\":null,\n" +
-                "                \"goodsName\":null,\n" +
-                "                \"hazardLevel\":null,\n" +
-                "                \"totleCount\":null,\n" +
-                "                \"quantity\":null,\n" +
-                "                \"itemInfo\":null,\n" +
-                "                \"disputeType\":null,\n" +
-                "                \"court\":null,\n" +
-                "                \"lineType\":null,\n" +
-                "                \"insuredType\":null,\n" +
-                "                \"isSignInsured\":null,\n" +
-                "                \"collectBsae\":null,\n" +
-                "                \"businessClass\":null,\n" +
-                "                \"companyLevel\":null,\n" +
-                "                \"companyType\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"singlePayRate\":null,\n" +
-                "                \"ensureCardNo\":null\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Confines\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Rations\":[\n" +
-                "            {\n" +
-                "                \"id\":{\n" +
-                "                    \"modeCode\":\"1\",\n" +
-                "                    \"pkey\":\"TJBU202032046000005683\"\n" +
-                "                },\n" +
-                "                \"modeName\":\"虚拟财产保险060天至060天\",\n" +
-                "                \"planCode\":\"JBUYY00001\",\n" +
-                "                \"serialNo\":null,\n" +
-                "                \"itinerary\":null,\n" +
-                "                \"sex\":null,\n" +
-                "                \"age\":null,\n" +
-                "                \"occupationCode\":null,\n" +
-                "                \"jobTitle\":null,\n" +
-                "                \"quantity\":1,\n" +
-                "                \"rationCount\":1,\n" +
-                "                \"groupDiscount\":null,\n" +
-                "                \"insuredFlag\":null,\n" +
-                "                \"countryCode\":null,\n" +
-                "                \"sickRoomLevel\":null,\n" +
-                "                \"journeyBack\":null,\n" +
-                "                \"journeyEnd\":null,\n" +
-                "                \"journeyStart\":null,\n" +
-                "                \"remark\":null,\n" +
-                "                \"updateFlag\":null,\n" +
-                "                \"flag\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"discountType\":null,\n" +
-                "                \"discountMode\":null,\n" +
-                "                \"discountValue\":null,\n" +
-                "                \"unitPremium\":null,\n" +
-                "                \"premiumB4Discount\":null,\n" +
-                "                \"premium\":null,\n" +
-                "                \"planTypeCode\":null\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Items\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Fees\":[\n" +
-                "            {\n" +
-                "                \"id\":{\n" +
-                "                    \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                    \"currency\":\"CNY\"\n" +
-                "                },\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"riskCode\":\"JBU\",\n" +
-                "                \"amount\":200,\n" +
-                "                \"premiumB4Discount\":null,\n" +
-                "                \"premium\":20,\n" +
-                "                \"flag\":\"\",\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"sumTaxFee\":1.13,\n" +
-                "                \"sumTaxFee_ys\":0,\n" +
-                "                \"sumNetPremium\":18.87,\n" +
-                "                \"sumTaxFee_gb\":0,\n" +
-                "                \"sumTaxFee_lb\":0\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Renewals\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"CargoDetails\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Cprotocols\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Clauses\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Contributions\":[\n" +
-                "\n" +
-                "        ],\n" +
-                "        \"Commons\":[\n" +
-                "            {\n" +
-                "                \"pkey\":\"TJBU202032046000005683\",\n" +
-                "                \"tkey\":\"2020-01-15 09:01:45\",\n" +
-                "                \"proposalNo\":\"TJBU202032046000005683\",\n" +
-                "                \"specialFlag\":\"               \",\n" +
-                "                \"ext1\":null,\n" +
-                "                \"ext2\":null,\n" +
-                "                \"ext3\":null,\n" +
-                "                \"resourceCode\":null,\n" +
-                "                \"resourceName\":null,\n" +
-                "                \"qualityLevel\":null,\n" +
-                "                \"insertTimeForHis\":\"2020-01-15 09:02:02\",\n" +
-                "                \"operateTimeForHis\":\"2020-01-15 09:02:03\",\n" +
-                "                \"newBusinessNature\":\"020\",\n" +
-                "                \"scmsAuditNotion\":null,\n" +
-                "                \"pay_method\":null,\n" +
-                "                \"platformProjectCode\":\"CPI000493\",\n" +
-                "                \"handler1Code_uni\":\"1232061117\",\n" +
-                "                \"handlerCode_uni\":\" \",\n" +
-                "                \"commonFlag\":\"               \",\n" +
-                "                \"otherPolicyName\":null,\n" +
-                "                \"groupName\":null,\n" +
-                "                \"isHPDriveCus\":\"0\",\n" +
-                "                \"startTime\":null,\n" +
-                "                \"endTime\":null,\n" +
-                "                \"salesCode\":null,\n" +
-                "                \"electronic\":\"0\",\n" +
-                "                \"electronicTitle\":null,\n" +
-                "                \"electronicPhone\":null,\n" +
-                "                \"socialinsPay\":null,\n" +
-                "                \"socialinsNo\":null,\n" +
-                "                \"projectCode\":\"\",\n" +
-                "                \"projectName\":null,\n" +
-                "                \"priorityFlag\":null,\n" +
-                "                \"priorityMessage\":null,\n" +
-                "                \"isAccredit\":null,\n" +
-                "                \"accreditType\":null,\n" +
-                "                \"accreditDate\":null,\n" +
-                "                \"bankFlowNo\":null,\n" +
-                "                \"sealNum\":null,\n" +
-                "                \"policyNo\":\"PJBU202032046000005452\",\n" +
-                "                \"classify\":null,\n" +
-                "                \"overSeas\":\"0\",\n" +
-                "                \"isClaim\":null,\n" +
-                "                \"isCondition\":null,\n" +
-                "                \"unifiedInsurance\":\" \",\n" +
-                "                \"electronicEmail\":null,\n" +
-                "                \"isRenewalTeam\":null,\n" +
-                "                \"keyAccountCode\":null,\n" +
-                "                \"isRenewal\":null,\n" +
-                "                \"isGIvesff\":null,\n" +
-                "                \"isStatistics\":null,\n" +
-                "                \"isInsureRate\":null,\n" +
-                "                \"busiAccountType\":\" \",\n" +
-                "                \"isPStage\":\" \",\n" +
-                "                \"visaCode\":null,\n" +
-                "                \"visaPrintCode\":null,\n" +
-                "                \"visaNo\":null,\n" +
-                "                \"isVisaCancel\":null,\n" +
-                "                \"internetCode\":null,\n" +
-                "                \"isPoverty\":null,\n" +
-                "                \"isTargetedPoverty\":null,\n" +
-                "                \"coMakecom\":null,\n" +
-                "                \"coOperatorcode\":null,\n" +
-                "                \"inputType\":null,\n" +
-                "                \"deliverFlag\":null,\n" +
-                "                \"deliverType\":null,\n" +
-                "                \"addressee\":null,\n" +
-                "                \"deliverTel\":null,\n" +
-                "                \"deliverAddr\":null,\n" +
-                "                \"isVsCard\":null,\n" +
-                "                \"subinformation\":null,\n" +
-                "                \"isRapidCalPremium\":null,\n" +
-                "                \"externalPayFlag\":null,\n" +
-                "                \"ownerFlag\":null,\n" +
-                "                \"signTag\":null,\n" +
-                "                \"signState\":null,\n" +
-                "                \"transFlag\":null,\n" +
-                "                \"invokeFlag\":null,\n" +
-                "                \"invoiceCode\":null,\n" +
-                "                \"reviewerName\":null,\n" +
-                "                \"receivableFlag\":null,\n" +
-                "                \"internationalFlag\":null,\n" +
-                "                \"policyFactorFlag\":null,\n" +
-                "                \"recallFlag\":null\n" +
-                "            }\n" +
-                "        ],\n" +
-                "        \"Coupon\":null,\n" +
-                "        \"InsuredCataLists\":[\n" +
-                "\n" +
-                "        ]\n" +
-                "    }\n" +
-                "}";
-        ArrayList<String> strings = new ArrayList<String>();
-        HashMap<Object, String> stringObjectHashMap = new HashMap<Object, String>();
-        getFiledName(str,strings,stringObjectHashMap);
-        System.out.println(strings);
-        System.out.println(stringObjectHashMap);
-
+    /**
+     * 当数据库中没有这个字段，报文中有的时候，此方法可以手动给数据库中添加此字段
+     *
+     * @param dbv    数据库中查询出来的数据
+     * @param dkey   添加的字段名
+     * @param dvalue 添加的值
+     * @return
+     */
+    public static JSONArray addDb(JSONArray dbv, String dkey, Object dvalue)
+    {
+        JSONObject jsonObject2 = dbv.getJSONObject(0);
+        jsonObject2.put(dkey, dvalue);
+        String value = String.valueOf(jsonObject2);
+        value = "[" + value + "]";
+        JSONArray JA = JSONArray.parseArray(value);
+        return JA;
     }
 
 
-
+    public static void main(String[] args)
+    {
+        StringBuffer stringBuffer = new StringBuffer();
+        String value = "{\"status\":0,\"statusText\":\"Success\",\"data\":{\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"classCode\":\"06\",\"riskCode\":\"EAD\",\"riskName\":\"机动车车上人员补充意外伤害保险 \",\"projectCode\":null,\"contractNo\":null,\"policySort\":\"1\",\"businessNature\":\"0\",\"language\":\"C\",\"policyType\":\"99\",\"agriFlag\":\"0\",\"operateDate\":\"2020-12-13 00:00:00\",\"startDate\":\"2020-12-13 00:00:00\",\"endDate\":\"2021-12-12 00:00:00\",\"startHour\":0,\"endHour\":24,\"disRate\":null,\"sumValue\":0.00,\"sumAmount\":50000.00,\"sumDiscount\":null,\"sumPremiumB4Discount\":null,\"couponAmount\":null,\"couponPremium\":null,\"minPremium\":null,\"sumPremium\":100.00,\"sumSubPrem\":0.00,\"sumQuantity\":null,\"policyCount\":null,\"judicalScope\":\"01\",\"argueSolution\":\"1\",\"arbitBoardName\":\"\",\"payTimes\":1,\"makeCom\":\"33080101\",\"operateSite\":null,\"comCode\":\"33080101\",\"handlerCode\":\"16213921\",\"handler1Code\":\"16213921\",\"checkFlag\":\"4\",\"checkUpCode\":null,\"checkOpinion\":null,\"underWriteCode\":null,\"underWriteName\":null,\"operatorCode\":\"16213921\",\"inputTime\":\"2020-12-11 10:47:08\",\"underWriteEndDate\":null,\"statisticsYM\":null,\"agentCode\":\"000002000001\",\"coinsFlag\":\"00\",\"reinsFlag\":\"0000000000\",\"allinsFlag\":\"0\",\"underWriteFlag\":\"0\",\"jfeeFlag\":\"1\",\"inputFlag\":\"0\",\"undwrtSubmitDate\":null,\"othFlag\":\"000000YY00\",\"remark\":null,\"checkCode\":null,\"flag\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"payMode\":\"1\",\"payCode\":null,\"crossFlag\":\"0\",\"batchGroupNo\":null,\"sumTaxFee\":5.66,\"sumNetPremium\":94.34,\"prePremium\":null,\"pkey\":\"TEAD202033086000000392\",\"tkey\":\"2020-12-11 10:47:11\",\"currency\":\"CNY\",\"dmFlag\":\"A\",\"handler1Code_uni\":\"1233130777\",\"handlerCode_uni\":\"1233130777\",\"isAutoePolicy\":\"1\",\"salesCode\":\"A000002258\",\"personOri\":\"6\",\"productCode\":null,\"productName\":null,\"approverCode\":null,\"pureRate\":null,\"discount\":null,\"insuredCount\":1,\"auditNo\":null,\"auditNoToE\":null,\"crossSellType\":\"3\",\"inputSumPremium\":null,\"dutySumNetPremium\":null,\"freeSumNetPremium\":null,\"orderNo\":null,\"orderFlag\":null,\"policyPageVo\":null,\"prpCmainAccs\":[],\"prpCmainExts\":[],\"prpCmainBonds\":[],\"prpCextendInfos\":[],\"prpCmainAirLines\":[],\"prpCcommissions\":[],\"prpCcoeffs\":[],\"prpCmainAgris\":[],\"prpCprojects\":[],\"prpCprofitFactors\":[],\"prpCclauseplans\":[],\"prpCpayeeAccounts\":[],\"actualProduct\":null,\"prpCmainExtraVo\":null,\"Employees\":[],\"Props\":[],\"AgentDetails\":[],\"shipDrivers\":[],\"Drivers\":[],\"Addresses\":[],\"InsuredIdvLists\":[],\"Crosses\":[],\"Subs\":[],\"Agents\":[],\"Credits\":[],\"Constructs\":[],\"Itemkinds\":[{\"id\":{\"pkey\":\"TEAD202033086000000392\",\"itemKindNo\":1},\"riskCode\":\"EAD\",\"familyNo\":null,\"familyName\":null,\"projectCode\":\"暂时写死\",\"clauseCode\":\"060047\",\"clauseName\":\"意外伤害保险条款\",\"kindCode\":\"060066\",\"kindName\":\"意外身故、残疾给付\",\"itemNo\":1,\"itemCode\":null,\"itemDetailName\":null,\"groupNo\":1,\"modeCode\":\"EAD0000001\",\"modeName\":\"非营业车湖北100元\",\"startDate\":\"2020-12-13\",\"startHour\":0,\"endDate\":\"2021-12-11\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":null,\"calculateFlag\":\"1\",\"currency\":\"CNY\",\"unitAmount\":50000.00,\"quantity\":1,\"unit\":\"1\",\"value\":null,\"amount\":50000.00,\"ratePeriod\":null,\"rate\":2.00000000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"prePremium\":null,\"calPremium\":100.00,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":1.000000,\"adjustRate\":null,\"unitPremium\":100.00,\"premiumB4Discount\":null,\"premium\":100.00,\"deductibleRate\":null,\"deductible\":null,\"taxFee\":5.66,\"taxFee_ys\":null,\"taxFee_gb\":0.00,\"taxFee_lb\":0.00,\"netPremium\":94.34,\"allTaxFee\":5.66,\"allNetPremium\":94.34,\"taxRate\":6.00,\"taxFlag\":\"2\",\"flag\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"policyNo\":null,\"proposalNo\":\"TEAD202033086000000392\",\"tkey\":\"2020-12-11 10:47:11\",\"prpCprofits\":[],\"iscalculateFlag\":null,\"userCount\":null,\"pack\":null,\"firstLevel\":null,\"methodType\":null,\"insuredQuantity\":null,\"clauseFlag\":\"1\",\"itemKindFactorFlag\":null,\"prpCitemKindTaxFees\":[],\"ItemKindDetails\":[]}],\"Limits\":[],\"Loans\":[],\"Engages\":[{\"id\":{\"pkey\":\"TEAD202033086000000392\",\"serialNo\":1},\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"tkey\":\"2020-12-11 10:47:11\",\"riskCode\":\"EAD\",\"clauseCode\":\"916204\",\"clauseName\":\"驾意险（仅承保驾驶车辆过程中）\",\"clauses\":\"根据《附加调整承保期间保险条款（2009版）》，本保险合同仅承担被保险人作为驾驶员在车辆行驶过程中或为维护车辆继续运行（包括加油、加水、故障修理、换胎）的临时停放过程中发生的意外伤害事故。\",\"flag\":\"N\",\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"groupNo\":null,\"relatedFlag\":null,\"relatedContent\":null}],\"Insureds\":[{\"id\":{\"pkey\":\"TEAD202033086000000392\",\"serialNo\":1},\"serialNo\":null,\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"tkey\":\"2020-12-11 10:47:11\",\"riskCode\":\"EAD\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"21001004961200\",\"insuredName\":\"赵小杰\",\"insuredEName\":null,\"aliasName\":null,\"insuredAddress\":\"北京市市辖区东城区\",\"insuredNature\":null,\"insuredFlag\":\"10000000000000000000000000000A\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"0\",\"relateSerialNo\":null,\"identifyType\":\"01\",\"identifyNumber\":\"130724198803120810\",\"unifiedSocialCreditCode\":null,\"creditLevel\":null,\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":null,\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":\"北京是辖区朝阳区双井\",\"postCode\":null,\"phoneNumber\":\"15600928784\",\"faxNumber\":null,\"mobile\":\"15600928784\",\"netAddress\":null,\"email\":\"11@qqq.com\",\"dateValid\":null,\"startDate\":\"2020-12-13 00:00:00\",\"endDate\":\"2021-12-12 00:00:00\",\"benefitFlag\":null,\"benefitRate\":null,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":\"1\",\"age\":32,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":\"2\",\"flag\":null,\"warningFlag\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"blackFlag\":null,\"importSerialNo\":null,\"prpCinsuredCreditInvests\":[],\"groupCode\":null,\"groupName\":null,\"dweller\":\"A\",\"customerLevel\":null,\"insuredPYName\":null,\"groupNo\":null,\"itemNo\":null,\"importFlag\":null,\"smsFlag\":null,\"emailFlag\":null,\"sendPhone\":null,\"sendEmail\":null,\"subPolicyNo\":null,\"socialSecurityNo\":null,\"electronicflag\":\"0\",\"insuredSort\":null,\"isHealthSurvey\":null,\"InsuredNatures\":[{\"id\":{\"pkey\":\"TEAD202033086000000392\",\"serialNo\":1},\"serialNo\":null,\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"tkey\":\"2020-12-11 10:47:11\",\"insuredFlag\":\"10000000000000000000000000000A\",\"sex\":\"1\",\"age\":32,\"birthday\":\"1988-03-12\",\"health\":null,\"jobTitle\":null,\"localWorkYears\":null,\"education\":null,\"totalWorkYears\":null,\"unit\":null,\"unitPhoneNumber\":null,\"unitAddress\":null,\"unitPostCode\":null,\"unitType\":null,\"dutyLevel\":null,\"dutyType\":null,\"occupationCode\":null,\"houseProperty\":null,\"localPoliceStation\":null,\"roomAddress\":null,\"roomPostCode\":null,\"selfMonthIncome\":null,\"familyMonthIncome\":null,\"incomeSource\":null,\"roomPhone\":null,\"mobile\":null,\"familySumQuantity\":null,\"marriage\":null,\"spouseName\":null,\"spouseBornDate\":null,\"spouseId\":null,\"spouseMobile\":null,\"spouseUnit\":null,\"spouseJobTitle\":null,\"spouseUnitPhone\":null,\"flag\":null,\"carType\":null,\"disablePartAndLevel\":null,\"moreLoanHouseFlag\":null,\"nation\":null,\"poorFlag\":null,\"licenseNo\":null,\"getLicenseDate\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"educationCode\":null,\"contactNo\":null,\"contactName\":null,\"certificationDate\":null,\"certificationNo\":null,\"addressCount\":null,\"importFlag\":null,\"socialFlag\":null,\"cardAmount\":null,\"usedAmount\":null,\"payAmount\":null,\"isPoverty\":null,\"importSerialNo\":null}],\"InsuredArtifs\":[]},{\"id\":{\"pkey\":\"TEAD202033086000000392\",\"serialNo\":2},\"serialNo\":null,\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"tkey\":\"2020-12-11 10:47:11\",\"riskCode\":\"EAD\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"21001004961200\",\"insuredName\":\"赵小杰\",\"insuredEName\":null,\"aliasName\":null,\"insuredAddress\":\"北京市市辖区东城区\",\"insuredNature\":null,\"insuredFlag\":\"010000000000000000000000000000\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"0\",\"relateSerialNo\":null,\"identifyType\":\"01\",\"identifyNumber\":\"130724198803120810\",\"unifiedSocialCreditCode\":null,\"creditLevel\":null,\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":null,\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":\"北京是辖区朝阳区双井\",\"postCode\":null,\"phoneNumber\":\"15600928784\",\"faxNumber\":null,\"mobile\":\"15600928784\",\"netAddress\":null,\"email\":\"11@qqq.com\",\"dateValid\":null,\"startDate\":\"2020-12-13 00:00:00\",\"endDate\":\"2021-12-12 00:00:00\",\"benefitFlag\":null,\"benefitRate\":null,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":\"1\",\"age\":32,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":\"2\",\"flag\":null,\"warningFlag\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"blackFlag\":null,\"importSerialNo\":null,\"prpCinsuredCreditInvests\":[],\"groupCode\":null,\"groupName\":null,\"dweller\":\"A\",\"customerLevel\":null,\"insuredPYName\":null,\"groupNo\":null,\"itemNo\":null,\"importFlag\":null,\"smsFlag\":null,\"emailFlag\":null,\"sendPhone\":null,\"sendEmail\":null,\"subPolicyNo\":null,\"socialSecurityNo\":null,\"electronicflag\":\"0\",\"insuredSort\":null,\"isHealthSurvey\":null,\"InsuredNatures\":[{\"id\":{\"pkey\":\"TEAD202033086000000392\",\"serialNo\":2},\"serialNo\":null,\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"tkey\":\"2020-12-11 10:47:11\",\"insuredFlag\":\"010000000000000000000000000000\",\"sex\":\"1\",\"age\":32,\"birthday\":\"1988-03-12\",\"health\":null,\"jobTitle\":null,\"localWorkYears\":null,\"education\":null,\"totalWorkYears\":null,\"unit\":null,\"unitPhoneNumber\":null,\"unitAddress\":null,\"unitPostCode\":null,\"unitType\":null,\"dutyLevel\":null,\"dutyType\":null,\"occupationCode\":null,\"houseProperty\":null,\"localPoliceStation\":null,\"roomAddress\":null,\"roomPostCode\":null,\"selfMonthIncome\":null,\"familyMonthIncome\":null,\"incomeSource\":null,\"roomPhone\":null,\"mobile\":null,\"familySumQuantity\":null,\"marriage\":null,\"spouseName\":null,\"spouseBornDate\":null,\"spouseId\":null,\"spouseMobile\":null,\"spouseUnit\":null,\"spouseJobTitle\":null,\"spouseUnitPhone\":null,\"flag\":null,\"carType\":null,\"disablePartAndLevel\":null,\"moreLoanHouseFlag\":null,\"nation\":null,\"poorFlag\":null,\"licenseNo\":null,\"getLicenseDate\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"educationCode\":null,\"contactNo\":null,\"contactName\":null,\"certificationDate\":null,\"certificationNo\":null,\"addressCount\":null,\"importFlag\":null,\"socialFlag\":null,\"cardAmount\":null,\"usedAmount\":null,\"payAmount\":null,\"isPoverty\":null,\"importSerialNo\":null}],\"InsuredArtifs\":[]}],\"Coins\":[],\"SpecialFacs\":[],\"Batches\":[],\"Commissions\":[],\"Cargos\":[],\"Plans\":[{\"tkey\":\"2020-12-11 10:47:11\",\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"id\":{\"pkey\":\"TEAD202033086000000392\",\"serialNo\":1},\"endorseNo\":null,\"payNo\":1,\"payReason\":\"R21\",\"planDate\":\"2020-12-13\",\"currency\":\"CNY\",\"subsidyrate\":null,\"planFee\":100.00,\"delinquentFee\":100.00,\"flag\":null,\"payDate\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"payType\":null,\"exchangeNo\":null,\"paymentcomplete\":null,\"taxFee\":5.66}],\"CoinsDetails\":[],\"Liabs\":[],\"Confines\":[],\"Rations\":[{\"id\":{\"modeCode\":\"1\",\"pkey\":\"TEAD202033086000000392\"},\"modeName\":\"非营业车湖北100元\",\"planCode\":\"EAD0000001\",\"serialNo\":null,\"itinerary\":null,\"sex\":null,\"age\":null,\"occupationCode\":null,\"jobTitle\":null,\"quantity\":1,\"rationCount\":1,\"groupDiscount\":null,\"insuredFlag\":null,\"countryCode\":null,\"sickRoomLevel\":null,\"journeyBack\":null,\"journeyEnd\":null,\"journeyStart\":null,\"remark\":null,\"updateFlag\":null,\"flag\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"tkey\":\"2020-12-11 10:47:11\",\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"discountType\":null,\"discountMode\":null,\"discountValue\":null,\"unitPremium\":null,\"premiumB4Discount\":null,\"premium\":null,\"planTypeCode\":null}],\"Items\":[],\"Fees\":[{\"id\":{\"pkey\":\"TEAD202033086000000392\",\"currency\":\"CNY\"},\"proposalNo\":\"TEAD202033086000000392\",\"policyNo\":null,\"tkey\":\"2020-12-11 10:47:11\",\"riskCode\":\"EAD\",\"amount\":50000.00,\"premiumB4Discount\":null,\"premium\":100.00,\"flag\":\"\",\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"sumTaxFee\":5.66,\"sumTaxFee_ys\":0.00,\"sumNetPremium\":94.34,\"sumTaxFee_gb\":0.00,\"sumTaxFee_lb\":0.00}],\"Renewals\":[],\"CargoDetails\":[],\"Cprotocols\":[],\"Clauses\":[],\"Contributions\":[],\"CreditOths\":[],\"Commons\":[{\"pkey\":\"TEAD202033086000000392\",\"tkey\":\"2020-12-11 10:47:11\",\"proposalNo\":\"TEAD202033086000000392\",\"specialFlag\":\"               \",\"ext1\":null,\"ext2\":null,\"ext3\":null,\"resourceCode\":null,\"resourceName\":null,\"qualityLevel\":null,\"insertTimeForHis\":\"2020-12-11 10:47:11\",\"operateTimeForHis\":\"2020-12-11 10:47:11\",\"newBusinessNature\":\"020\",\"scmsAuditNotion\":\"无\",\"pay_method\":null,\"platformProjectCode\":\"MST000001\",\"handler1Code_uni\":\"1233130777\",\"handlerCode_uni\":\"1233130777\",\"commonFlag\":\"0 0 0     0\",\"otherPolicyName\":null,\"groupName\":null,\"isHPDriveCus\":\"0\",\"startTime\":\"00:00\",\"endTime\":\"00:00\",\"salesCode\":\"A000002258\",\"electronic\":\"0\",\"electronicTitle\":null,\"electronicPhone\":null,\"socialinsPay\":null,\"socialinsNo\":null,\"projectCode\":null,\"projectName\":null,\"priorityFlag\":null,\"priorityMessage\":null,\"isAccredit\":null,\"accreditType\":null,\"accreditDate\":null,\"bankFlowNo\":null,\"sealNum\":null,\"policyNo\":null,\"classify\":null,\"overSeas\":\"0\",\"isClaim\":null,\"isCondition\":null,\"unifiedInsurance\":null,\"electronicEmail\":null,\"isRenewalTeam\":null,\"keyAccountCode\":null,\"isRenewal\":null,\"isGIvesff\":null,\"isStatistics\":null,\"isInsureRate\":null,\"busiAccountType\":null,\"isPStage\":\"0\",\"visaCode\":null,\"visaPrintCode\":\"EEEADC00181\",\"visaNo\":null,\"isVisaCancel\":null,\"internetCode\":null,\"isPoverty\":null,\"isTargetedPoverty\":null,\"coMakecom\":null,\"coOperatorcode\":null,\"inputType\":null,\"deliverFlag\":null,\"deliverType\":null,\"addressee\":null,\"deliverTel\":null,\"deliverAddr\":null,\"isVsCard\":null,\"subinformation\":null,\"isRapidCalPremium\":null,\"externalPayFlag\":null,\"ownerFlag\":null,\"signTag\":null,\"signState\":null,\"transFlag\":null,\"invokeFlag\":null,\"invoiceCode\":null,\"reviewerName\":null,\"receivableFlag\":null,\"internationalFlag\":null,\"policyFactorFlag\":null,\"recallFlag\":null}],\"Coupon\":null,\"InsuredCataLists\":[]}}";
+        JSONObject jsonObject = JSONObject.parseObject(value);
+        JSONArray objects1 = new JSONArray();
+        getJAByField("Itemkinds",jsonObject,objects1);
+        String a = "[{\"netpremium\":94.34,\"endhour\":24,\"modecode\":\"EAD0000001\",\"projectcode\":\"暂时写死\",\"discount\":1.000000,\"startdate\":\"2020-12-13\",\"calpremium\":100.00,\"taxfee_gb\":0.00,\"clauseflag\":\"1\",\"clausecode\":\"060047\",\"operatetimeforhis\":1607654831000,\"taxrate\":6.00,\"clausename\":\"意外伤害保险条款\",\"itemno\":1,\"unit\":\"1\",\"enddate\":\"2021-12-11\",\"taxflag\":\"2\",\"modename\":\"非营业车湖北100元\",\"inserttimeforhis\":1607654831000,\"taxfee_lb\":0.00,\"riskcode\":\"EAD\",\"itemkindno\":1,\"unitamount\":50000.00,\"calculateflag\":\"1\",\"proposalno\":\"TEAD202033086000000392\",\"shortrateflag\":\"3\",\"premium\":100.00,\"alltaxfee\":5.66,\"rate\":2.00000000000,\"allnetpremium\":94.34,\"starthour\":0,\"currency\":\"CNY\",\"pkey\":\"TEAD202033086000000392\",\"tkey\":1607654831000,\"unitpremium\":100.00,\"amount\":50000.00,\"quantity\":1.00,\"kindname\":\"意外身故、残疾给付\",\"shortrate\":100.0000,\"kindcode\":\"060066\",\"taxfee\":5.66,\"groupno\":1}] ";
+        JSONArray objects = JSONArray.parseArray(a);
+        listCompare(objects1,objects,stringBuffer,"Itemkinds",null);
+    }
 }
