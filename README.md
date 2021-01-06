@@ -29,7 +29,7 @@
 #使用说明
 * 准备两个测试数据
     * 接口的返回或者请求报文
-    String json = "{
+    `String json = "{
                        "status": 0,
                        "message": "",
                        "data": {
@@ -827,7 +827,7 @@
                                }
                            ]
                        }
-                   }";
+                   }";`
     * 通过Jmeter的数据库取样器查询出来的数据库数据
     `String db = "[{"type":"destination","title":"国内热门目的地"},{"type":"destination","title":"国内热门目的地"}]";`
     * 节点名称
