@@ -141,7 +141,7 @@ public class CompareUtil
     /**
      * 数据库表的数据和返回报文对应接口数据校验，思路是返回报文的节点对应一张表
      *
-     * @param resultJa        返回或者请求报文的节点数据
+     * @param resultJa     返回或者请求报文的节点数据
      * @param db           数据库的数据
      * @param errorMessage 错误信息
      * @param fieldName    节点名
@@ -346,39 +346,30 @@ public class CompareUtil
      * @param value
      * @return String
      */
-    private static String isDate(String value)
-    {
+    private static String isDate(String value) {
         String result = "";
-        if (value.contains(".")) {
-            value = value.substring(0, value.indexOf("."));
-        }
-        if (value.contains("T")) {
-            value = value.replace("T", " ");
-        }
-        if (value.contains("00:00:00")) {
-            value = value.substring(0, 10);
-        }
-        if (value.length() == 13 && value.charAt(0) != '0' && isNumber(value) && value.charAt(1) != '.') {
-            Long l = Long.parseLong(value);
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if (value.contains("-") && value.contains(":") && value.length() > 18) {
+            result = value.substring(0, 10);
+        } else if (value.contains("T") && value.length() > 18 && value.contains("-") && value.contains(":") && value.contains(".")) {
+            result = value.substring(0, 10);
+        } else if (value.contains("00:00:00")) {
+            result = value.substring(0, 10);
+            //value.replaceAll(regex, replacement)
+        }else if (value.contains("-") && value.contains(":") && value.length() > 18 && value.contains(".")) {
+            result = value.substring(0, 10);
+        } else if(value.length() == 13 && value.charAt(0) != '0' && isNumber(value) &&  value.charAt(1) != '.' && value.contains(".") && value.contains(":")){
+            System.out.println("接口==00=000:::::========"+value);
+
+            long l = Long.parseLong(value);
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat();
             result = simpleDateFormat.format(l);
         }
-        boolean flag = false;
-        String pattern = "^((([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3})-(((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01]))|((0[469]|11)-(0[1-9]|[12][0-9]|30))|(02-(0[1-9]|[1][0-9]|2[0-8]))))|((([0-9]{2})(0[48]|[2468][048]|[13579][26])|((0[48]|[2468][048]|[3579][26])00))-02-29))\\s+([0-1]?[0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])$";
-
-        String pattern1 = "(([0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]{1}|[0-9]{1}[1-9][0-9]{2}|[1-9][0-9]{3})-(((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01]))|"
-                + "((0[469]|11)-(0[1-9]|[12][0-9]|30))|(02-(0[1-9]|[1][0-9]|2[0-8]))))|((([0-9]{2})(0[48]|[2468][048]|[13579][26])|"
-                + "((0[48]|[2468][048]|[3579][26])00))-02-29)$";
-
-        if (result.matches(pattern) || result.matches(pattern1)) {
-            flag = true;
-        }
-        if (flag) {
+        if(result != ""){
             return result;
-        }
-        else {
+        }else{
             return value;
         }
+
     }
 
 
@@ -431,18 +422,73 @@ public class CompareUtil
 
     public static void main(String[] args)
     {
-        String value = "{\"status\":0,\"statusText\":\"Success\",\"data\":{\"createEndorseVo\":null,\"confirmEndorseVo\":null,\"prpCmainVo\":{\"proposalNo\":\"TEAC202033001000000004\",\"policyNo\":\"PEAC202033001000000002\",\"classCode\":\"06\",\"riskCode\":\"EAC\",\"projectCode\":null,\"contractNo\":null,\"policySort\":\"1\",\"businessNature\":\"0\",\"language\":\"C\",\"policyType\":\"03\",\"operateDate\":\"2020-12-25T08:00:00.000+0800\",\"startDate\":\"2020-12-26T08:00:00.000+0800\",\"startHour\":0,\"endDate\":\"2021-12-25T08:00:00.000+0800\",\"endHour\":24,\"pureRate\":null,\"disRate\":null,\"discount\":null,\"currency\":\"CNY\",\"sumValue\":100.00,\"sumAmount\":168948.31,\"sumDiscount\":null,\"sumPremium\":1689.48,\"sumSubPrem\":0.00,\"sumQuantity\":3,\"insuredCount\":null,\"policyCount\":null,\"judicalScope\":\"中国境内（港、澳、台除外）\",\"autoTransRenewFlag\":null,\"argueSolution\":\"1\",\"arbitBoardName\":null,\"payTimes\":1,\"makeCom\":\"33000000\",\"operateSite\":null,\"comCode\":\"33000100\",\"handlerCode\":\"01081016\",\"handler1Code\":\"33335933\",\"approverCode\":null,\"checkFlag\":\"4\",\"checkUpCode\":null,\"checkOpinion\":null,\"underWriteCode\":\"A330000185\",\"underWriteName\":\"王心冰\",\"operatorCode\":\"A330000182\",\"inputTime\":\"2020-12-25T23:20:50.000+0800\",\"underWriteEndDate\":\"2020-12-25T08:00:00.000+0800\",\"statisticsYM\":\"2020-11-30T16:00:00.000+0800\",\"agentCode\":\"000001000001\",\"coinsFlag\":\"00\",\"reinsFlag\":\"0000000000\",\"allinsFlag\":\"0\",\"underWriteFlag\":\"1\",\"othFlag\":\"000000YY00\",\"remark\":null,\"flag\":\"   0     A\",\"insertTimeForHis\":null,\"operateTimeForHis\":\"2020-12-25T23:37:53.000+0800\",\"crossFlag\":\"0\",\"printNo\":null,\"prpCmainLoanVos\":[],\"prpCmainInvestVos\":[],\"prpcmainCargoVos\":[],\"prpcmainLiabVos\":[],\"prpcmainConstructVos\":[],\"prpcmainAgriVos\":[],\"prpCnameVos\":[],\"prpCitemShipVos\":[],\"prpCitemShipYBVos\":null,\"prpCitemPlaneVos\":[],\"prpCitemVos\":[],\"prpCcargoDetailVos\":[],\"prpCmainSubVos\":[],\"prpCitemDeviceVos\":[],\"prpCitemDeviceYBVos\":null,\"prpCaddressVos\":[],\"prpCitemCarVos\":[],\"prpCitemKindVos\":[{\"proposalNo\":\"TEAC202033001000000004\",\"itemKindNo\":1,\"prpCmain\":null,\"riskCode\":\"EAC\",\"familyNo\":null,\"familyName\":null,\"projectCode\":\"not null\",\"clauseCode\":\"060036\",\"clauseName\":\"交通工具乘客意外伤害保险条款\",\"kindCode\":\"060043\",\"kindName\":\"在汽车中因意外伤害造成的身故、残疾\",\"itemNo\":1,\"itemCode\":null,\"itemDetailName\":null,\"modeCode\":null,\"modeName\":null,\"startDate\":\"2020-12-26T08:00:00.000+0800\",\"startHour\":0,\"endDate\":\"2021-12-25T08:00:00.000+0800\",\"endHour\":24,\"model\":null,\"buyDate\":null,\"addressNo\":null,\"calculateFlag\":\"1\",\"currency\":\"CAD\",\"unitAmount\":11111.00,\"quantity\":3,\"unit\":\"1\",\"value\":null,\"amount\":33333.00,\"ratePeriod\":null,\"rate\":10.00000000000,\"shortRateFlag\":\"3\",\"shortRate\":100.0000,\"basePremium\":null,\"benchMarkPremium\":null,\"discount\":31.625553,\"adjustRate\":null,\"premium\":333.33,\"prePremium\":null,\"deductibleRate\":null,\"deductible\":null,\"flag\":\" \",\"insertTimeForHis\":null,\"operateTimeForHis\":\"2020-12-25T23:35:40.000+0800\",\"groupNo\":1,\"taxFlag\":\"2\"}],\"prpCengageVos\":[{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":1,\"lineNo\":1,\"clauseCode\":\"000017\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":10,\"lineNo\":1,\"clauseCode\":\"910065\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":11,\"lineNo\":1,\"clauseCode\":\"910066\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":12,\"lineNo\":1,\"clauseCode\":\"910067\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":13,\"lineNo\":1,\"clauseCode\":\"910068\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":14,\"lineNo\":1,\"clauseCode\":\"910069\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":15,\"lineNo\":1,\"clauseCode\":\"910070\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":16,\"lineNo\":1,\"clauseCode\":\"910071\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":17,\"lineNo\":1,\"clauseCode\":\"910072\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":18,\"lineNo\":1,\"clauseCode\":\"910073\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":19,\"lineNo\":1,\"clauseCode\":\"910074\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":20,\"lineNo\":1,\"clauseCode\":\"910075\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":21,\"lineNo\":1,\"clauseCode\":\"910076\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":22,\"lineNo\":1,\"clauseCode\":\"910077\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":23,\"lineNo\":1,\"clauseCode\":\"910449\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":24,\"lineNo\":1,\"clauseCode\":\"914530\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":25,\"lineNo\":1,\"clauseCode\":\"914169\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":26,\"lineNo\":1,\"clauseCode\":\"914417\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":27,\"lineNo\":1,\"clauseCode\":\"914418\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":28,\"lineNo\":1,\"clauseCode\":\"914457\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":29,\"lineNo\":1,\"clauseCode\":\"914283\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":30,\"lineNo\":1,\"clauseCode\":\"914284\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":31,\"lineNo\":1,\"clauseCode\":\"914208\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":32,\"lineNo\":1,\"clauseCode\":\"914563\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":33,\"lineNo\":1,\"clauseCode\":\"914209\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":34,\"lineNo\":1,\"clauseCode\":\"914170\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":35,\"lineNo\":1,\"clauseCode\":\"914705\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":36,\"lineNo\":1,\"clauseCode\":\"916148\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":37,\"lineNo\":1,\"clauseCode\":\"916149\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":38,\"lineNo\":1,\"clauseCode\":\"916150\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":39,\"lineNo\":1,\"clauseCode\":\"915076\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":2,\"lineNo\":1,\"clauseCode\":\"000018\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":3,\"lineNo\":1,\"clauseCode\":\"000019\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":4,\"lineNo\":1,\"clauseCode\":\"000020\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":5,\"lineNo\":1,\"clauseCode\":\"000021\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":6,\"lineNo\":1,\"clauseCode\":\"000022\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":7,\"lineNo\":1,\"clauseCode\":\"000023\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":8,\"lineNo\":1,\"clauseCode\":\"000024\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null},{\"policyNo\":null,\"riskCode\":\"EAC\",\"serialNo\":9,\"lineNo\":1,\"clauseCode\":\"910064\",\"clauses\":null,\"flag\":null,\"remark\":null,\"validFlag\":null}],\"prpcCoinsVos\":[],\"prpCinsuredVos\":[{\"proposalNo\":\"TEAC202033001000000004\",\"serialNo\":1,\"riskCode\":\"EAC\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"10000100421803\",\"insuredName\":\"周东\",\"insuredEName\":null,\"aliasName\":null,\"insuredAddress\":\"北京市市辖区朝阳区人保\",\"insuredNature\":null,\"insuredFlag\":\"1\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"0\",\"relateSerialNo\":null,\"identifyType\":\"01\",\"identifyNumber\":\"410703198307072018\",\"creditLevel\":\"1\",\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":\"010101\",\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":\"北京市市辖区朝阳区人保\",\"postCode\":null,\"phoneNumber\":null,\"faxNumber\":null,\"mobile\":\"18618232407\",\"netAddress\":null,\"email\":null,\"startDate\":null,\"endDate\":null,\"benefitFlag\":null,\"benefitRate\":null,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":\"1\",\"age\":37,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":null,\"flag\":\" \",\"professionCode\":\"\",\"professionName\":\"\"},{\"proposalNo\":\"TEAC202033001000000004\",\"serialNo\":1,\"riskCode\":\"EAC\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"10000100421803\",\"insuredName\":\"周东\",\"insuredEName\":null,\"aliasName\":null,\"insuredAddress\":\"北京市市辖区朝阳区人保\",\"insuredNature\":null,\"insuredFlag\":\"2\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"0\",\"relateSerialNo\":null,\"identifyType\":\"01\",\"identifyNumber\":\"410703198307072018\",\"creditLevel\":\"1\",\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":\"010101\",\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":\"北京市市辖区朝阳区人保\",\"postCode\":null,\"phoneNumber\":null,\"faxNumber\":null,\"mobile\":\"18618232407\",\"netAddress\":null,\"email\":null,\"startDate\":null,\"endDate\":null,\"benefitFlag\":null,\"benefitRate\":null,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":\"1\",\"age\":37,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":null,\"flag\":\" \",\"professionCode\":\"\",\"professionName\":\"\"},{\"proposalNo\":\"TEAC202033001000000004\",\"serialNo\":2,\"riskCode\":\"EAC\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"21000001590407\",\"insuredName\":\"芈月\",\"insuredEName\":null,\"aliasName\":null,\"insuredAddress\":\"北京市市辖区西城区西海国际中心\",\"insuredNature\":null,\"insuredFlag\":\"1\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"0\",\"relateSerialNo\":null,\"identifyType\":\"01\",\"identifyNumber\":\"511423199006160012\",\"creditLevel\":\"1\",\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":\"000101\",\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":\"北京市市辖区西城区西海国际中心\",\"postCode\":null,\"phoneNumber\":null,\"faxNumber\":null,\"mobile\":\"13322223333\",\"netAddress\":null,\"email\":null,\"startDate\":null,\"endDate\":null,\"benefitFlag\":null,\"benefitRate\":null,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":\"2\",\"age\":30,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":null,\"flag\":null,\"professionCode\":\"\",\"professionName\":\"\"},{\"proposalNo\":\"TEAC202033001000000004\",\"serialNo\":3,\"riskCode\":\"EAC\",\"language\":\"C\",\"insuredType\":\"1\",\"insuredCode\":\"10000079272205\",\"insuredName\":\"茶派\",\"insuredEName\":null,\"aliasName\":null,\"insuredAddress\":\"北京市市辖区昌平区回龙观一区4号楼3单元1222\",\"insuredNature\":null,\"insuredFlag\":\"1\",\"unitType\":null,\"appendPrintName\":null,\"insuredIdentity\":\"0\",\"relateSerialNo\":null,\"identifyType\":\"01\",\"identifyNumber\":\"411403198211289444\",\"creditLevel\":\"1\",\"possessNature\":null,\"businessSource\":null,\"businessSort\":null,\"occupationCode\":\"000101\",\"educationCode\":null,\"bank\":null,\"accountName\":null,\"account\":null,\"linkerName\":null,\"postAddress\":\"北京市市辖区昌平区回龙观一区4号楼3单元1222\",\"postCode\":\"000001\",\"phoneNumber\":null,\"faxNumber\":null,\"mobile\":\"18310924552\",\"netAddress\":null,\"email\":\"changjinxin@pt.picc.com.cn\",\"startDate\":null,\"endDate\":null,\"benefitFlag\":null,\"benefitRate\":null,\"drivingLicenseNo\":null,\"changelessFlag\":null,\"sex\":\"2\",\"age\":38,\"marriage\":null,\"driverAddress\":null,\"peccancy\":null,\"acceptLicenseDate\":null,\"receiveLicenseYear\":null,\"drivingYears\":null,\"causeTroubleTimes\":null,\"awardLicenseOrgan\":null,\"drivingCarType\":null,\"countryCode\":\"CHN\",\"versionNo\":null,\"auditstatus\":null,\"flag\":null,\"professionCode\":null,\"professionName\":null}],\"prpCspecialFacVos\":[],\"prpClimitVos\":[],\"prpRepolicyVos\":[],\"prpCitemCreditOths\":[],\"prpCinsuredCreditInvestVos\":[],\"prpCmainCommonVos\":[{\"proposalNo\":\"TEAC202033001000000004\",\"prpCmain\":null,\"specialFlag\":\" 0 0  0        \",\"ext1\":\"\",\"ext2\":\"\",\"ext3\":\"\",\"resourceCode\":\"\",\"resourceName\":\"\",\"insertTimeForHis\":\"2020-12-25T23:33:01.000+0800\",\"operateTimeForHis\":\"2020-12-25T23:35:40.000+0800\",\"newBusinessNature\":\"010\",\"scmsAuditNotion\":\"\",\"pay_method\":\"\",\"platformProjectCode\":\"\",\"handler1Code_uni\":\"1294010948\",\"handlerCode_uni\":\"1294010948\",\"commonFlag\":\"0 0 0     0    \"}],\"prpCmainPropVos\":[],\"schoolName\":null,\"prpCrationVos\":null,\"prpCextendInfoVos\":null,\"appliName\":\"周东\",\"insuredName\":\"周东\",\"insuredAddress\":\"北京市市辖区朝阳区人保\",\"appliCode\":\"10000100421803\",\"insuredCode\":\"10000100421803\",\"endorseTimes\":1,\"appliAddress\":\"北京市市辖区朝阳区人保\",\"newBusinessNature\":\"010\",\"claimTimes\":null},\"prpReRiskVos\":null,\"prpCnameVos\":null,\"reduceEndorVo\":null,\"policySummaryVos\":[],\"endorseInfo\":null,\"endorsePtextCondition\":null,\"endorsePTextVo\":null,\"prpCinsuredVos\":null,\"prpCextendInfoVos\":null,\"endorsePuwEndorVo\":null,\"payPlanVos\":[],\"prpCfeeVos\":[],\"prpCitemKindVos\":null,\"contractInfoVo\":null,\"policyNo\":null,\"bjHepPolicyVo\":null,\"prpCitemCarVos\":null,\"prpCitemShipVos\":null,\"insuredIdvListCondition\":null,\"prpCinsuredIdvListVos\":null,\"status\":\"\",\"message\":\"\",\"mainPolicyNo\":null}}";
-        JSONObject jsonObject1 = JSONObject.parseObject(value).getJSONObject("data");
-        String s = JSONObject.toJSONString(jsonObject1);
-        //System.out.println(s);
-        ArrayList strings = new ArrayList();
-        HashMap stringObjectHashMap = new HashMap();
-        stringObjectHashMap.put("prpCmainVo","prpcopymain");
-        stringObjectHashMap.put("prpCitemKindVos","prpcopyitemkind");
-        HashMap table_field = new HashMap();
-        getFiledName(s,strings,table_field,stringObjectHashMap);
-        System.out.println(strings);
-        System.out.println(table_field);
+        String response = "\n" +
+                "{\n" +
+                "    \"applyNo\": \"DEAJ202132041000000002\",\n" +
+                "    \"bizType\": \"1\",\n" +
+                "    \"importNo\": \"IMEAJ0000202000021\",\n" +
+                "    \"importVos\": [\n" +
+                "        {\n" +
+                "            \"prpCinsuredIdvList\": [\n" +
+                "                {\n" +
+                "                    \"birthday\": \"1997-06-02 00:00:00\",\n" +
+                "                    \"insuredFlag\": \"010000000000000000000000000000\",\n" +
+                "                    \"flag\": \"修改\",\n" +
+                "                    \"identifyNumber\": \"210103198506020034\",\n" +
+                "                    \"occupationCode\": \"020103\",\n" +
+                "                    \"identifyType\": \"01\",\n" +
+                "                    \"groupNo\": \"1\",\n" +
+                "                    \"insuredCName\": \"接口测试批改团单导入一\",\n" +
+                "\t\t\t\t\t\"sex\":\"1\"\n" +
+                "                }\n" +
+                "            ],\n" +
+                "            \"flag\": \"I\",\n" +
+                "            \"importSerialNo\": \"\",\n" +
+                "            \"orderId\": \"1\"\n" +
+                "        },\n" +
+                "        {\n" +
+                "            \"prpCinsuredIdvList\": [\n" +
+                "                {\n" +
+                "                    \"birthday\": \"1986-06-02 00:00:00\",\n" +
+                "                    \"insuredFlag\": \"010000000000000000000000000000\",\n" +
+                "                    \"flag\": \"增加\",\n" +
+                "                    \"identifyNumber\": \"210103198506020050\",\n" +
+                "                    \"occupationCode\": \"040202\",\n" +
+                "                    \"identifyType\": \"01\",\n" +
+                "                    \"groupNo\": \"1\",\n" +
+                "                    \"insuredCName\": \"接口测试批改团单导入二\"\n" +
+                "                }\n" +
+                "            ],\n" +
+                "            \"flag\": \"I\",\n" +
+                "            \"importSerialNo\": \"\",\n" +
+                "            \"orderId\": \"2\"\n" +
+                "        },\n" +
+                "\t\t        {\n" +
+                "            \"prpCinsuredIdvList\": [\n" +
+                "                {\n" +
+                "                    \"birthday\": \"1932-06-02 00:00:00\",\n" +
+                "                    \"insuredFlag\": \"010000000000000000000000000000\",\n" +
+                "                    \"flag\": \"增加\",\n" +
+                "                    \"identifyNumber\": \"210103198506020077\",\n" +
+                "                    \"occupationCode\": \"010103\",\n" +
+                "                    \"identifyType\": \"01\",\n" +
+                "                    \"groupNo\": \"1\",\n" +
+                "                    \"insuredCName\": \"接口测试批改团单导入三\"\n" +
+                "                }\n" +
+                "            ],\n" +
+                "            \"flag\": \"I\",\n" +
+                "            \"importSerialNo\": \"\",\n" +
+                "            \"orderId\": \"3\"\n" +
+                "        }\n" +
+                "    ],\n" +
+                "    \"policyType\": \"03\",\n" +
+                "    \"serialNo\": \"156\"\n" +
+                "}\n" +
+                "\n";
+        JSONObject jsonObject1 = JSONObject.parseObject(response);
+        JSONArray objects = new JSONArray();
+        getJAByField("prpCinsuredIdvList",jsonObject1,objects);
+        System.out.println(objects);
 
     }
 }
