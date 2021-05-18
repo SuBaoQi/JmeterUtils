@@ -1,9 +1,6 @@
-package com.cccc.coco.utils;
+package com.jmeter.utils;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import jdk.nashorn.internal.scripts.JS;
-
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -77,7 +74,7 @@ public class CompareUtil
      * 从JSON数据中取出指定节点的数据
      *
      * @param fieldName 节点名
-     * @param jsObject        JSON数据
+     * @param jsObject   JSON数据
      * @param resultJa  返回或者请求报文的节点数据（作为listCompare的方法参数）
      */
     public static void getJAByField(String fieldName, JSONObject jsObject, JSONArray resultJa)
@@ -204,7 +201,7 @@ public class CompareUtil
     }
 
     /**
-     * 去掉数据库字段的下划线（核保微服务）
+     * 去掉数据库字段的下划线
      *
      * @param JA
      * @return
@@ -263,16 +260,16 @@ public class CompareUtil
     /**
      * NUll值的处理
      *
-     * @param value1
+     * @param value 需要处理的数据
      * @return
      */
-    private static String isNull(Object value1)
+    private static String isNull(Object value)
     {
-        if (value1 == null) {
+        if (value == null) {
             return "";
         }
         else {
-            return value1.toString();
+            return value.toString();
         }
     }
 
@@ -372,7 +369,11 @@ public class CompareUtil
 
     }
 
-
+    /**
+     *将时间字段的下划线去掉
+     * @param JS
+     * @return
+     */
     public static JSONObject dealData(JSONObject JS)
     {
         JSONObject temJS = new JSONObject();
@@ -417,79 +418,6 @@ public class CompareUtil
                 errorMessage.append("数据库===" + dbStr + "\n");
             }
         }
-    }
-
-
-    public static void main(String[] args)
-    {
-        String response = "\n" +
-                "{\n" +
-                "    \"applyNo\": \"DEAJ202132041000000002\",\n" +
-                "    \"bizType\": \"1\",\n" +
-                "    \"importNo\": \"IMEAJ0000202000021\",\n" +
-                "    \"importVos\": [\n" +
-                "        {\n" +
-                "            \"prpCinsuredIdvList\": [\n" +
-                "                {\n" +
-                "                    \"birthday\": \"1997-06-02 00:00:00\",\n" +
-                "                    \"insuredFlag\": \"010000000000000000000000000000\",\n" +
-                "                    \"flag\": \"修改\",\n" +
-                "                    \"identifyNumber\": \"210103198506020034\",\n" +
-                "                    \"occupationCode\": \"020103\",\n" +
-                "                    \"identifyType\": \"01\",\n" +
-                "                    \"groupNo\": \"1\",\n" +
-                "                    \"insuredCName\": \"接口测试批改团单导入一\",\n" +
-                "\t\t\t\t\t\"sex\":\"1\"\n" +
-                "                }\n" +
-                "            ],\n" +
-                "            \"flag\": \"I\",\n" +
-                "            \"importSerialNo\": \"\",\n" +
-                "            \"orderId\": \"1\"\n" +
-                "        },\n" +
-                "        {\n" +
-                "            \"prpCinsuredIdvList\": [\n" +
-                "                {\n" +
-                "                    \"birthday\": \"1986-06-02 00:00:00\",\n" +
-                "                    \"insuredFlag\": \"010000000000000000000000000000\",\n" +
-                "                    \"flag\": \"增加\",\n" +
-                "                    \"identifyNumber\": \"210103198506020050\",\n" +
-                "                    \"occupationCode\": \"040202\",\n" +
-                "                    \"identifyType\": \"01\",\n" +
-                "                    \"groupNo\": \"1\",\n" +
-                "                    \"insuredCName\": \"接口测试批改团单导入二\"\n" +
-                "                }\n" +
-                "            ],\n" +
-                "            \"flag\": \"I\",\n" +
-                "            \"importSerialNo\": \"\",\n" +
-                "            \"orderId\": \"2\"\n" +
-                "        },\n" +
-                "\t\t        {\n" +
-                "            \"prpCinsuredIdvList\": [\n" +
-                "                {\n" +
-                "                    \"birthday\": \"1932-06-02 00:00:00\",\n" +
-                "                    \"insuredFlag\": \"010000000000000000000000000000\",\n" +
-                "                    \"flag\": \"增加\",\n" +
-                "                    \"identifyNumber\": \"210103198506020077\",\n" +
-                "                    \"occupationCode\": \"010103\",\n" +
-                "                    \"identifyType\": \"01\",\n" +
-                "                    \"groupNo\": \"1\",\n" +
-                "                    \"insuredCName\": \"接口测试批改团单导入三\"\n" +
-                "                }\n" +
-                "            ],\n" +
-                "            \"flag\": \"I\",\n" +
-                "            \"importSerialNo\": \"\",\n" +
-                "            \"orderId\": \"3\"\n" +
-                "        }\n" +
-                "    ],\n" +
-                "    \"policyType\": \"03\",\n" +
-                "    \"serialNo\": \"156\"\n" +
-                "}\n" +
-                "\n";
-        JSONObject jsonObject1 = JSONObject.parseObject(response);
-        JSONArray objects = new JSONArray();
-        getJAByField("prpCinsuredIdvList",jsonObject1,objects);
-        System.out.println(objects);
-
     }
 }
 
