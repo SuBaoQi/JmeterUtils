@@ -29,10 +29,10 @@ git clone git@github.com:SuBaoQi/JmeterUtils.git
     getJAByField(String fieldName, JSONObject jsObject, JSONArray resultJa) 
     ```
     
-    从`JSON`数据中取出指定节点的数据。
-    * 参数fieldName为指定的节点名称
-    * 参数jsObject为响应或者请求报文的JSONObject类型
-    * 参数resultJa为接收处理之后指定节点的容器，为listCompare()方法使用
+    从`JSON`数据中取出指定节点(只能提取`JSONObject`或者`JSONArray`类型)的数据。
+    * 参数`fieldName`为指定的节点名称
+    * 参数`jsObject`为响应或者请求报文的`JSONObject`类型
+    * 参数`resultJa`为接收处理之后指定节点的容器，为`listCompare()`方法使用
     * 如果有多个重名的节点，会将这些节点的数据都拿出放到resultJa中
     
 * listCompare(JSONArray resultJa, JSONArray db, StringBuffer errorMessage, String fieldName,ArrayList<String> ignoreList) 指定节点的数据和该节点对应数据库中的数据进行字段值的比较

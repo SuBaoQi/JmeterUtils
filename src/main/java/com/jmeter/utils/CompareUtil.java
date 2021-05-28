@@ -71,7 +71,7 @@ public class CompareUtil
     }
 
     /**
-     * 从JSON数据中取出指定节点的数据
+     * 从JSON数据中取出指定节点的数据(只能提取JSONObject或者JSONArray类型)
      *
      * @param fieldName 节点名
      * @param jsObject   JSON数据

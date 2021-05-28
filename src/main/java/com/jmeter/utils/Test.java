@@ -849,7 +849,7 @@ public class Test
                 "}";
         JSONObject jsonObject = JSONObject.parseObject(response);
         JSONArray ja = new JSONArray();
-        CompareUtil.getJAByField("status",jsonObject,ja);
+        CompareUtil.getJAByField("data",jsonObject,ja);
         String s = ja.toString();
         System.out.println(s);
     }
