@@ -8,8 +8,9 @@ import com.alibaba.fastjson.JSONObject;
  * @title: Test
  * @projectName JmeterUtils
  * @description: TODO
- * @date 2021/5/1814:46
- */
+ * @date 2021/5/1814:46*/
+
+
 public class Test
 {
     public static void main(String[] args)
@@ -852,5 +853,6 @@ public class Test
         CompareUtil.getJAByField("data",jsonObject,ja);
         String s = ja.toString();
         System.out.println(s);
+        String a ="{\"ticket\":\"563084c61c404d2884be72b148f42ab3\"}";
     }
 }
